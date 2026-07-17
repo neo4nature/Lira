@@ -1,0 +1,8 @@
+requests
+vosk
+sounddevice
+fastapi
+uvicorn
+pydantic
+
+Flask>=3.0
