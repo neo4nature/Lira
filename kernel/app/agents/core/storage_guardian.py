@@ -7,7 +7,7 @@ If low space is detected, evolve/auto-install should be treated as read-only.
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict
 
@@ -18,7 +18,7 @@ def _state_path() -> Path:
     return Path(__file__).resolve().parents[4] / "data" / "shared_context" / "state" / "storage.json"
 
 def _ts() -> str:
-    return datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds") + "Z"
 
 def check() -> Dict:
     details = []

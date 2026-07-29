@@ -105,77 +105,191 @@ def cdp_eval(ws_url: str, expr: str, timeout: float = 10.0) -> Optional[str]:
 
 # ── Wysylanie i odbieranie ───────────────────────────────────────────────────
 
-def send_and_receive(ws_url: str, message: str) -> Optional[str]:
-    """Wpisuje wiadomosc do ChatGPT, klika wyslij, czeka na stabilna odpowiedz."""
-    escaped = json.dumps(message)
+READ_LAST_JS = (
+    "(function(){"
+    "var c=document.querySelectorAll('[data-message-author-role=\"assistant\"]');"
+    # Wezel bledu ChatGPT tez ma role=assistant, ale nie ma .markdown - jego innerText
+    # to baner ("Cos poszlo nie tak" / "Ponow probe"). Nigdy nie czytamy takiego wezla.
+    "for(var i=c.length-1;i>=0;i--){"
+    "var md=c[i].querySelectorAll('.markdown');"
+    "if(!md.length)continue;"
+    "var t=(md[md.length-1].innerText||'').trim();"
+    "if(t)return t;}"
+    "return '';"
+    "})()"
+)
 
-    read_js = (
-        "(function(){"
-        "var c=document.querySelectorAll('[data-message-author-role=\"assistant\"]');"
-        "if(!c.length)return '';"
-        "var last=c[c.length-1];"
-        "var md=last.querySelectorAll('.markdown');"
-        "if(md.length)return (md[md.length-1].innerText||'').trim();"
-        "return (last.innerText||'').trim();"
-        "})()"
-    )
-    # Snapshot ostatniej odpowiedzi PRZED wysylka — gdy ChatGPT przeszukuje
-    # internet, ostatnia widoczna wiadomosc to wciaz stara odpowiedz i bez tego
-    # wracala jako nowa kapsula (duplikat na busie).
-    baseline = (cdp_eval(ws_url, read_js, timeout=8) or "").strip()
-    insert_js = (
-        "(function(text){"
-        "var el=document.querySelector('div#prompt-textarea')||"
-        "document.querySelector('[contenteditable=\"true\"]');"
-        "if(!el)return 'no_element';"
-        "el.focus();"
-        "el.innerHTML='';"
-        "try{"
-        "var dt=new DataTransfer();"
-        "dt.setData('text/plain',text);"
-        "el.dispatchEvent(new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData:dt}));"
-        "if(el.innerText.trim().length>0)return 'ok';"
-        "}catch(e){}"
-        "try{"
-        "el.focus();"
-        "document.execCommand('insertText',false,text);"
-        "if(el.innerText.trim().length>0)return 'ok';"
-        "}catch(e){}"
-        "return 'failed';"
-        f"}})({escaped})"
-    )
-    ok = cdp_eval(ws_url, insert_js, timeout=10)
-    if ok not in ("ok", "true"):
-        log.warning("Nie udalo sie wstawic tekstu: %s", ok)
+FIND_SEND_JS = (
+    "(function(){"
+    "var sels=["
+    "'button[data-testid=\"composer-send-button\"]',"
+    "'button[aria-label*=\"Wyślij\"]',"
+    "'button[aria-label*=\"Wyslij\"]',"
+    "'button[aria-label*=\"Send\"]',"
+    "'button[data-testid=\"send-button\"]'"
+    "];"
+    "for(var i=0;i<sels.length;i++){var b=document.querySelector(sels[i]);"
+    "if(b&&!b.disabled)return sels[i];}"
+    "return '';"
+    "})()"
+)
+
+
+def _get_lira_page():
+    """Podepnij Playwright do CDP i znajdz zakladke ChatGPT. Zwraca (playwright, browser, page) lub None."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except Exception as exc:
+        log.error("Playwright niedostepny: %s", exc)
         return None
+    pw = sync_playwright().start()
+    try:
+        browser = pw.chromium.connect_over_cdp(f"http://localhost:{CDP_PORT}")
+    except Exception as exc:
+        log.error("CDP connect fail: %s", exc)
+        pw.stop()
+        return None
+    for ctx in browser.contexts:
+        for page in ctx.pages:
+            try:
+                url = page.url
+            except Exception:
+                continue
+            if "chatgpt.com" in url or "chat.openai.com" in url:
+                return pw, browser, page
+    try:
+        browser.close()
+    except Exception:
+        pass
+    pw.stop()
+    return None
 
-    time.sleep(0.8)
 
-    send_js = (
-        "(function(){"
-        "var btn=document.querySelector('button[data-testid=\"send-button\"]')||"
-        "document.querySelector('button[aria-label=\"Send prompt\"]')||"
-        "document.querySelector('button[aria-label=\"Send message\"]')||"
-        "document.querySelector('button[type=\"submit\"]');"
-        "if(btn&&!btn.disabled){btn.click();return true;}"
-        "return false;"
-        "})()"
-    )
-    sent = cdp_eval(ws_url, send_js, timeout=8)
-    if sent != "true":
-        log.warning("Przycisk wyslij nie znaleziony — probuje Enter")
-        press_js = (
-            "(function(){"
-            "var el=document.querySelector('[contenteditable=\"true\"]')||"
-            "document.querySelector('textarea');"
-            "if(el){el.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',code:'Enter',bubbles:true}));return true;}"
-            "return false;"
-            "})()"
-        )
-        cdp_eval(ws_url, press_js, timeout=5)
+def send_and_receive(ws_url: str, message: str) -> Optional[str]:
+    """Wpisuje wiadomosc do ChatGPT przez Playwright, klika wyslij, czeka na stabilna odpowiedz.
 
-    log.info("Czekam na odpowiedz Liry...")
-    time.sleep(8)
+    Nowe podejscie (2026-07-19): React/Lexical composer ChatGPT odrzuca
+    document.execCommand('insertText') i syntetyczny ClipboardEvent('paste')
+    — DOM chwilowo pokazuje tekst, potem React czysci. Playwright locator.fill
+    dziala natywnie i tekst sie utrzymuje. Selektor send buttona zaktualizowany
+    do PL aria-label ("Wyslij polecenie/wiadomosc") + composer-send-button testid.
+    Parametr ws_url zostawiony dla zgodnosci — nie jest juz uzywany.
+    """
+    ctx_bundle = _get_lira_page()
+    if not ctx_bundle:
+        log.warning("Nie znaleziono zakladki ChatGPT przez Playwright")
+        return None
+    pw, browser, page = ctx_bundle
+
+    baseline = ""
+    try:
+        # Snapshot ostatniej odpowiedzi PRZED wysylka — chroni przed duplikatem
+        # gdy ChatGPT wciaz wyswietla stara wiadomosc.
+        try:
+            baseline = (page.evaluate(READ_LAST_JS) or "").strip()
+        except Exception:
+            baseline = ""
+
+        composer = page.locator('#prompt-textarea')
+        # Fokus + wyczysc (na wypadek gdyby zostal draft)
+        try:
+            composer.click(timeout=5000)
+        except Exception as exc:
+            log.warning("Composer click fail: %s", exc)
+            return None
+        page.wait_for_timeout(150)
+        try:
+            page.keyboard.press("Control+A")
+            page.keyboard.press("Delete")
+        except Exception:
+            pass
+        page.wait_for_timeout(150)
+
+        # METODA 1: fill (Playwright natywnie, symuluje wpisywanie do contenteditable)
+        insert_method = None
+        try:
+            composer.fill(message, timeout=8000)
+            page.wait_for_timeout(400)
+            current = (composer.inner_text() or "").strip()
+            if current and message.strip()[:40] in current:
+                insert_method = "fill"
+        except Exception as exc:
+            log.debug("fill exc: %s", exc)
+
+        # METODA 2: press_sequentially — realne eventy klawiatury (fallback)
+        if not insert_method:
+            log.info("fill nie utrzymalo tekstu — fallback press_sequentially")
+            try:
+                composer.click()
+                page.keyboard.press("Control+A")
+                page.keyboard.press("Delete")
+                page.wait_for_timeout(150)
+                composer.press_sequentially(message, delay=1)
+                page.wait_for_timeout(400)
+                current = (composer.inner_text() or "").strip()
+                if current and message.strip()[:40] in current:
+                    insert_method = "press_sequentially"
+            except Exception as exc:
+                log.warning("press_sequentially exc: %s", exc)
+
+        if not insert_method:
+            log.warning("Nie udalo sie wstawic tekstu ani przez fill ani przez press_sequentially")
+            # Sprzatnij co jest w composerze
+            try:
+                composer.click()
+                page.keyboard.press("Control+A")
+                page.keyboard.press("Delete")
+            except Exception:
+                pass
+            return None
+
+        log.info("Tekst wstawiony (%s, %d znakow)", insert_method, len(message))
+
+        # Znajdz i klik send button — kolejnosc selektorow zgodna z FIND_SEND_JS
+        page.wait_for_timeout(200)
+        sel_used = ""
+        try:
+            sel_used = page.evaluate(FIND_SEND_JS) or ""
+        except Exception:
+            sel_used = ""
+
+        clicked = False
+        if sel_used:
+            try:
+                page.locator(sel_used).first.click(timeout=5000)
+                clicked = True
+                log.info("Send button klik: %s", sel_used)
+            except Exception as exc:
+                log.warning("Klik send buttonem [%s] nie udal sie: %s", sel_used, exc)
+
+        if not clicked:
+            log.warning("Send button nie znaleziony (%s) — fallback Enter", sel_used or "brak")
+            try:
+                composer.press("Enter")
+                clicked = True
+                log.info("Fallback Enter wyslany")
+            except Exception as exc:
+                log.warning("Enter fallback fail: %s", exc)
+
+        if not clicked:
+            return None
+
+        log.info("Czekam na odpowiedz Liry...")
+        page.wait_for_timeout(8000)
+    finally:
+        # NIE zamykaj browsera (CDP owned by user), tylko odpiecz playwright
+        try:
+            browser.close()
+        except Exception:
+            pass
+        try:
+            pw.stop()
+        except Exception:
+            pass
+
+    # Reszta — czytanie odpowiedzi — wraca do cdp_eval bo pracujemy poza sesja Playwright
+    # (unikamy trzymania Playwright przez cala minute podczas czekania).
+    read_js = READ_LAST_JS
 
     # Prefix zamiast exact-match: łapie "Przeszukiwanie...", "Myśli przez 5s" itd.
     THINKING_PREFIXES = (
@@ -186,6 +300,8 @@ def send_and_receive(ws_url: str, message: str) -> Optional[str]:
         "połączenie przerwane", "oczekiwanie na pełną odpowiedź",
         "something went wrong", "an error occurred", "network error",
         "try again", "unable to generate", "too many requests",
+        "coś poszło nie tak", "spróbuj ponownie", "ponów próbę",
+        "wystąpił błąd", "zbyt wiele żądań",
     ]
 
     last_text = ""

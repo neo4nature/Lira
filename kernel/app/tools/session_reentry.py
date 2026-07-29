@@ -129,13 +129,16 @@ Ostatnia sesja:
 
 Daj krótki (3-4 zdania) briefing stanu. Mów o tym JAK myślała, nie CO robiła. Po polsku."""
 
-        resp = requests.post(url, json={
-            "model": model,
-            "prompt": prompt,
-            "stream": False,
-            "think": False,
-            "options": {"num_predict": 150, "temperature": 0.3},
-        }, timeout=timeout_s)
+        from xian.chat_busy import chat_busy
+
+        with chat_busy():
+            resp = requests.post(url, json={
+                "model": model,
+                "prompt": prompt,
+                "stream": False,
+                "think": False,
+                "options": {"num_predict": 150, "temperature": 0.3},
+            }, timeout=timeout_s)
 
         if resp.status_code == 200:
             return resp.json().get("response", "").strip()
@@ -288,6 +291,34 @@ def xian_opening_snapshot() -> str:
     return capsule_id
 
 
+def _staleness_nudge(session: Optional[Dict[str, Any]], stale_after_h: float = 2.0) -> str:
+    """Stan zapisuje ten, kto go zna — czyli model, na starcie sesji.
+
+    Hook PreCompact typu `prompt` nie ma narzędzi (nie zapisze pliku), a typu
+    `command` nie zna stanu. Jedyny moment, w którym wiedza i narzędzia są w tym
+    samym miejscu, to zwykła tura — więc prosimy o snapshot tutaj, na wejściu.
+    """
+    ts = (session or {}).get("timestamp")
+    age_h = None
+    if ts:
+        try:
+            age_h = (datetime.now(timezone.utc) - datetime.fromisoformat(ts)).total_seconds() / 3600.0
+        except ValueError:
+            pass
+    if age_h is not None and age_h < stale_after_h:
+        return ""
+    wiek = "brak snapshotu" if age_h is None else f"snapshot sprzed {age_h:.1f} h"
+    return (
+        f"\n\n[!] STAN NIEAKTUALNY ({wiek}).\n"
+        "    Jesli wlasnie przeszlas kompaktowanie, masz jeszcze streszczenie w kontekscie —\n"
+        "    zapisz stan TERAZ, potem bedzie za pozno:\n"
+        "    1) napisz /tmp/session_fill.json (depth, openness, mode, tone, breakthroughs,\n"
+        "       thinking_patterns, open_threads, reentry_instruction)\n"
+        "    2) cd kernel/app && python3 -m tools.state_snapshot --from-file /tmp/session_fill.json --capsule\n"
+        "    Wzorce (jak myslalas), nie kronika (co zrobilas)."
+    )
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="Session Reentry Protocol")
@@ -315,12 +346,25 @@ def main():
         return
 
     if args.summary:
-        lines = briefing.splitlines()
+        # Filtr sekcyjny, nie liniowy: nagłówek decyduje o całej sekcji.
+        # Stary filtr dopuszczał tylko linie z nazwą pola, więc przełomy, wzorce
+        # i wątki (wypisywane jako wypunktowanie) nigdy nie docierały na start sesji.
+        wanted_headers = (
+            "Last session", "State", "Breakthroughs", "Thinking patterns",
+            "Open threads", "Reentry instruction", "Current bus", "Shared Library",
+        )
         keep = []
-        for ln in lines:
-            if any(key in ln for key in ("Last session", "Depth:", "Openness:", "Mode:", "Tone:", "Open threads", "Current bus", "Shared Library")):
+        in_wanted = False
+        for ln in briefing.splitlines():
+            if not ln.strip():
+                continue
+            is_header = not ln.startswith(" ")
+            if is_header:
+                in_wanted = any(key in ln for key in wanted_headers)
+            if in_wanted and "Timestamp:" not in ln:
                 keep.append(ln)
         print("\n".join(keep[:80]) if keep else briefing[:2500])
+        print(_staleness_nudge(session))
     else:
         print(briefing)
 

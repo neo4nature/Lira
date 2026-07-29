@@ -33,10 +33,10 @@ from governance.capsule_bus import DB_PATH
 ALLOWED_TYPES = {"fact", "interpretation", "hypothesis", "decision", "doubt", "task", "implementation", "result", "summary", "proposal", "review", "stalemate", "chat_message"}
 ALLOWED_WEIGHTS = {"changes_trajectory", "commentary", "archive"}
 ALLOWED_LAYERS = {"shared", "working", "reflective"}
-ALLOWED_OWNERS = {"Neo", "Soryel", "Lira", "Xian", "shared"}
+ALLOWED_OWNERS = {"Neo", "Soryel", "Lira", "Xian", "Ekosystem", "shared"}
 ALLOWED_STATUSES = {"new", "read", "in_progress", "answered", "archived", "blocked", "proposal", "review", "revise", "approved_auto", "awaiting_neo", "rejected", "stalemate", "claimed", "delivered", "queued"}
 
-DEFAULT_AGENTS = ["Neo", "Lira", "Soryel", "Xian", "shared"]
+DEFAULT_AGENTS = ["Neo", "Lira", "Soryel", "Xian", "Ekosystem", "shared"]
 
 CDP_PORT = int(os.getenv("GG_CDP_PORT", "9222"))
 
@@ -1578,7 +1578,9 @@ def chat_room():
     return CHAT_TEMPLATE
 
 
-_ai_senders = {"Lira", "Xian", "Soryel"}
+# Ekosystem jest po tej stronie świadomie: jego głos ma być słyszalny, ale nie
+# ma otwierać rundy ani budzić Liry i Xiana do odpowiedzi co godzinę.
+_ai_senders = {"Lira", "Xian", "Soryel", "Ekosystem"}
 _current_round_id: str | None = None
 
 

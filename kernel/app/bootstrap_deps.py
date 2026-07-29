@@ -3,7 +3,7 @@ import json
 import shutil
 import subprocess
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Set
 
 # -----------------------------------------------------------------------------
@@ -47,7 +47,7 @@ def _pin_piper_binary(report: Dict[str, Any]) -> None:
         report["actions"].append({"piper_pinned_error": str(e)})
 
 def _now_iso() -> str:
-    return datetime.utcnow().isoformat() + "Z"
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat() + "Z"
 
 def _load_manifest() -> Dict[str, Any]:
     if MANIFEST_PATH.exists():

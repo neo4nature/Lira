@@ -9,6 +9,8 @@ import os
 import requests
 from typing import Optional
 
+from xian.chat_busy import chat_busy
+
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434/api/generate")
 XIAN_MODEL = os.getenv("XIAN_OLLAMA_MODEL") or os.getenv("MODEL_HEAVY", "xian-v4")
 
@@ -33,18 +35,19 @@ def ask_xian(text: str) -> str:
     prompt += f"Neo: {text}\nXian:"
 
     try:
-        r = requests.post(
-            OLLAMA_URL,
-            json={
-                "model": XIAN_MODEL,
-                "prompt": prompt,
-                "stream": False,
-                "options": {"num_predict": 150, "temperature": 0.7},
-            },
-            timeout=120,
-        )
-        r.raise_for_status()
-        reply = (r.json().get("response") or "").strip()
+        with chat_busy():
+            r = requests.post(
+                OLLAMA_URL,
+                json={
+                    "model": XIAN_MODEL,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"num_predict": 150, "temperature": 0.7},
+                },
+                timeout=120,
+            )
+            r.raise_for_status()
+            reply = (r.json().get("response") or "").strip()
     except Exception:
         reply = ""
 

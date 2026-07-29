@@ -22,6 +22,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+from config import external_medium_ready
+
 
 def _iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
@@ -70,8 +72,12 @@ def run(days: int | None = None) -> Dict:
     offload_root = Path(os.getenv("LIRA_OFFLOAD_ROOT", "/media/neo/SD128/Lira_offload")).expanduser()
     days = int(days or int(os.getenv("LIRA_OFFLOAD_DAYS", "7")))
 
-    if not offload_root.exists():
-        return {"ts": _iso(), "ok": False, "reason": f"OFFLOAD_ROOT missing: {offload_root}"}
+    # Tu przenosimy, nie kopiujemy. Gdyby punkt montowania karty istniał jako
+    # zwykły katalog, `exists()` powiedziałoby tak i pliki zniknęłyby z projektu
+    # na dysk systemowy pod ścieżką udającą nośnik.
+    ready, why = external_medium_ready(offload_root)
+    if not ready:
+        return {"ts": _iso(), "ok": False, "reason": f"OFFLOAD_ROOT niedostępny: {offload_root} ({why})"}
 
     plan_obj = plan(days=days)
     items = plan_obj.get("items", [])

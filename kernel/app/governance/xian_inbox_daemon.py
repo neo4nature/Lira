@@ -249,6 +249,56 @@ def _recent_chat_context(exclude_id: str, max_msgs: int = 4, max_chars: int = 50
     return "\n".join(lines)
 
 
+def _memory_query(latest: str, exclude_id: str = "") -> str:
+    """Czego szukać w pamięci — nie zawsze tego, co napisano ostatnie.
+
+    Krótka wiadomość zwykle odsyła do poprzedniej ("powiedz, czy znasz odpowiedź
+    na pytanie Soryel"), więc sama w sobie nie ma o czym szukać. Wtedy pytanie
+    poszerzamy o poprzednią wypowiedź z czatu. Przy długiej wiadomości nie
+    poszerzamy, żeby nie rozmyć tematu.
+    """
+    q = " ".join((latest or "").split())
+    if len(q) >= 160:
+        return q
+    prev = _recent_chat_context(exclude_id=exclude_id, max_msgs=1, max_chars=400)
+    return f"{q} {prev}".strip() if prev else q
+
+
+def _memory_context(query: str, max_hits: int = 3, max_chars: int = 900) -> str:
+    """Fragmenty żywej pamięci pasujące do pytania — pusty łańcuch, gdy brak.
+
+    Cisza jest tu poprawnym wynikiem: próg w search_live odrzuca dopasowania
+    poniżej progu, więc lepiej nie podać nic niż podać przypadkowy fragment,
+    który Xian weźmie za wspomnienie. Pamięć nie może opóźnić odpowiedzi ani
+    jej zablokować, dlatego każdy błąd kończy się pustką, nie wyjątkiem.
+    """
+    q = (query or "").strip()
+    if len(q) < 12 or os.getenv("LIRA_XIAN_MEMORY", "1") != "1":
+        return ""
+    try:
+        from agents.memory.semantic_retrieval import search_live
+        hits = search_live(q, top_k=max_hits)
+    except Exception as exc:
+        log.warning("[xian] pamięć niedostępna: %s", exc)
+        return ""
+    if not hits:
+        log.info("[xian] pamięć: brak trafień powyżej progu dla %r", q[:60])
+        return ""
+    log.info("[xian] pamięć: %d fragment(ów), najlepszy %.3f", len(hits), float(hits[0].get("score", 0)))
+    lines: list[str] = []
+    budget = max_chars
+    for hit in hits:
+        text = " ".join((hit.get("text") or "").split())
+        if not text:
+            continue
+        piece = text[: max(120, budget // max_hits)]
+        lines.append(f"- ({hit.get('score')}) {piece}")
+        budget -= len(piece)
+        if budget <= 0:
+            break
+    return "\n".join(lines)
+
+
 def _capsule_text(cap: dict) -> str:
     """Extract user-visible text/body from capsule payload."""
     payload = cap.get("payload_json", {})
@@ -338,6 +388,11 @@ def _ask_xian(prompt: str) -> str:
     ctx = _build_context_prefix()
     if ctx:
         prompt = ctx + prompt
+    # Modelfile pozwala na 800 znaków, a num_predict tnie po ~700 — Xian słuchała
+    # instrukcji i traciła ostatnie zdanie (linię Refleksja) w połowie słowa.
+    # Tańsza strona wyrównania: krótszy budżet zamiast większego num_predict,
+    # bo każdy dodatkowy żeton to realne sekundy na tym procesorze.
+    prompt = prompt + "\n\nZmieść całą odpowiedź RAZEM z linią Refleksja w 550 znakach."
     body: dict = {
         "model": XIAN_MODEL,
         "prompt": prompt,
@@ -358,18 +413,14 @@ def _ask_xian(prompt: str) -> str:
     log.info("  → payload: %d chars (~%d tok), head=%r, tail=%r",
              plen, plen // 4, prompt[:80], prompt[-80:])
     # Faza 2 audytu 2026-05-30: trzymaj flagę, żeby embed czekał na koniec chatu
-    from pathlib import Path as _Path
-    _flag = _Path(os.getenv("LIRA_CHAT_BUSY_FLAG", "${LIRA_ROOT:-/opt/lira}/kernel/data/runtime/state/ollama_chat_busy.flag"))
-    try:
-        _flag.parent.mkdir(parents=True, exist_ok=True)
-        _flag.touch()
-    except Exception:
-        pass
+    from xian.chat_busy import chat_busy
+
     try:
         import time as _t
         _t0 = _t.time()
-        r = requests.post(OLLAMA_URL, json=body, timeout=OLLAMA_TIMEOUT)
-        r.raise_for_status()
+        with chat_busy():
+            r = requests.post(OLLAMA_URL, json=body, timeout=OLLAMA_TIMEOUT)
+            r.raise_for_status()
         _dt = _t.time() - _t0
         rj = r.json()
         pec = rj.get("prompt_eval_count", 0)
@@ -382,11 +433,6 @@ def _ask_xian(prompt: str) -> str:
     except Exception as e:
         log.warning("Ollama error: %s", e)
         return ""
-    finally:
-        try:
-            _flag.unlink(missing_ok=True)
-        except Exception:
-            pass
 
 
 def _batch_prompt(caps: list[dict]) -> str:
@@ -430,6 +476,9 @@ def _batch_prompt(caps: list[dict]) -> str:
         log.info("Truncation: latest msg from %s %d → 4000 chars", last_sender, len(last_text))
         _truncation_alert("Xian", "latest", last_sender, len(last_text), 4000)
     lines.append(f"\n---\nLATEST MESSAGE (from {last_sender}):\n{last_text[:4000]}")
+    memory = _memory_context(_memory_query(last_text, exclude_id=str(last.get("id") or "")))
+    if memory:
+        lines.append(f"\n---\n[Z pamięci ekosystemu — starsze, może być nieaktualne]:\n{memory}")
     lines.append("\n---\nOdpowiedz NAJPIERW na ostatnią wiadomość (5-8 zdań, płynnie). Możesz nawiązać do reszty.")
     return "\n".join(lines)
 
@@ -515,7 +564,10 @@ def _process_single(cap: dict) -> int:
     if is_moltbook_msg:
         peers = _round_peers_context(round_id)
         context = _recent_chat_context(exclude_id=cap_id)
+        memory = _memory_context(_memory_query(_capsule_text(cap), exclude_id=cap_id))
         ctx_parts = []
+        if memory:
+            ctx_parts.append(f"[Z pamięci ekosystemu — starsze, może być nieaktualne]:\n{memory}")
         if context:
             ctx_parts.append(f"[Ostatnie na czacie]:\n{context}")
         if peers:

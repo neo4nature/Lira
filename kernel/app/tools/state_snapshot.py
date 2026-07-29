@@ -87,11 +87,15 @@ def auto_detect_state() -> Dict[str, Any]:
     attention = _read_attention()
     bus = _bus_signals()
 
-    # Depth estimation: cognitive density + predictions count
-    density = float(cognitive.get("density") or 0.0)
-    pred_count = int(cognitive.get("predictions_count") or 0)
-    q_count = int(cognitive.get("open_questions") or 0)
-    depth = min(1.0, density * 0.5 + min(pred_count / 10.0, 0.3) + min(q_count / 5.0, 0.2))
+    # Depth estimation: cognitive density + predictions count.
+    # Brak sygnału kognitywnego to "nie zmierzono" (None), nie "głębokość zero".
+    if cognitive:
+        density = float(cognitive.get("density") or 0.0)
+        pred_count = int(cognitive.get("predictions_count") or 0)
+        q_count = int(cognitive.get("open_questions") or 0)
+        depth = round(min(1.0, density * 0.5 + min(pred_count / 10.0, 0.3) + min(q_count / 5.0, 0.2)), 2)
+    else:
+        depth = None
 
     # Mode from alignment
     mode = alignment.get("recommended_mode", "observe")
@@ -104,7 +108,7 @@ def auto_detect_state() -> Dict[str, Any]:
         openness = min(1.0, openness + 0.2)
 
     return {
-        "depth": round(depth, 2),
+        "depth": depth,
         "openness": round(openness, 2),
         "mode": mode,
     }
@@ -147,8 +151,8 @@ def build_snapshot(
         "duration_minutes": None,  # filled by caller if known
 
         "state": {
-            "depth": depth or 0.5,
-            "openness": openness or 0.5,
+            "depth": depth,
+            "openness": openness,
             "mode": mode or "observe",
             "tone": tone or "working",
         },
@@ -232,14 +236,27 @@ def main():
     parser.add_argument("--tone", type=str, default="", help="Session tone description")
     parser.add_argument("--capsule", action="store_true", help="Also write to capsule_bus")
     parser.add_argument("--session-id", type=str, help="Override session ID")
+    parser.add_argument("--from-file", type=str,
+                        help="JSON z polami, których nie da się wykryć automatycznie: "
+                             "breakthroughs, thinking_patterns, open_threads, "
+                             "a także depth/openness/mode/tone/reentry_instruction")
     args = parser.parse_args()
 
+    filled: Dict[str, Any] = {}
+    if args.from_file:
+        with open(args.from_file, "r", encoding="utf-8") as fh:
+            filled = json.load(fh)
+
     snapshot = build_snapshot(
-        session_id=args.session_id,
-        depth=args.depth,
-        openness=args.openness,
-        mode=args.mode,
-        tone=args.tone,
+        session_id=args.session_id or filled.get("session_id"),
+        depth=args.depth if args.depth is not None else filled.get("depth"),
+        openness=args.openness if args.openness is not None else filled.get("openness"),
+        mode=args.mode or filled.get("mode"),
+        tone=args.tone or filled.get("tone", ""),
+        breakthroughs=filled.get("breakthroughs"),
+        thinking_patterns=filled.get("thinking_patterns"),
+        open_threads=filled.get("open_threads"),
+        reentry_instruction=filled.get("reentry_instruction", ""),
         auto=args.auto,
     )
 

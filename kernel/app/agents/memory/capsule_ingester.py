@@ -138,7 +138,9 @@ def ingest_once(model: str = EMBED_MODEL, limit: int = 200, existing: set | None
                 continue
 
             text = text[:MAX_CHARS]
-            rid = f"capsule:{cap_id}:{_sha256(text)[:10]}"
+            # klucz po treści, nie po id kapsułki — ta sama wiadomość do trzech
+            # adresatów to trzy kapsułki o różnych id i jednym znaczeniu
+            rid = f"capsule:{_sha256(text)}"
             if rid in existing:
                 stats["skipped"] += 1
                 last_ts = cap.get("created_at") or last_ts

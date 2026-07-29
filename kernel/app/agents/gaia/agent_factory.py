@@ -5,7 +5,7 @@ Conservative: does not overwrite existing agents unless explicitly requested.
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -13,7 +13,7 @@ GENERATED_DIR = Path(__file__).resolve().parent / "generated"
 REGISTRY_PATH = Path(__file__).resolve().parent / "registry.json"
 
 def _ts() -> str:
-    return datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds") + "Z"
 
 def load_registry() -> Dict[str, Any]:
     if REGISTRY_PATH.exists():

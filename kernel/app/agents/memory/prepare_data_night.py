@@ -23,7 +23,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -34,7 +34,7 @@ from agents.core.runtime_stream import append_event
 
 
 def utc_now() -> str:
-    return datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds") + "Z"
 
 
 def _disk_usage(p: Path) -> Dict[str, Any]:
@@ -62,7 +62,7 @@ def _stat_file(p: Path) -> Dict[str, Any]:
             "path": str(p),
             "exists": True,
             "bytes": int(st.st_size),
-            "mtime": datetime.utcfromtimestamp(st.st_mtime).isoformat(timespec="seconds") + "Z",
+            "mtime": datetime.fromtimestamp(st.st_mtime, timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds") + "Z",
             "age_s": round(time.time() - st.st_mtime, 3),
         }
     except Exception as e:

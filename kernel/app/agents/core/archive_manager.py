@@ -2,16 +2,16 @@ from __future__ import annotations
 import argparse
 import os
 import tarfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterable, List, Optional
 
-from config import paths, ensure_dirs
+from config import paths, ensure_dirs, external_medium_ready
 from agents.core.runtime_stream import append_event
 from agents.core.idle_gate import allows_background
 
 def utc_date() -> str:
-    return datetime.utcnow().strftime("%Y-%m-%d")
+    return datetime.now(timezone.utc).replace(tzinfo=None).strftime("%Y-%m-%d")
 
 def _safe_mkdir(p: Path) -> None:
     p.mkdir(parents=True, exist_ok=True)
@@ -42,14 +42,14 @@ def rotate_runtime(runtime_path: Path, dest_dir: Path) -> Optional[Path]:
 
     size_mb = runtime_path.stat().st_size / (1024 * 1024)
     rotate_mb = int(os.getenv("LIRA_RUNTIME_ROTATE_MB", "50"))
-    mtime_day = datetime.utcfromtimestamp(runtime_path.stat().st_mtime).strftime("%Y-%m-%d")
+    mtime_day = datetime.fromtimestamp(runtime_path.stat().st_mtime, timezone.utc).replace(tzinfo=None).strftime("%Y-%m-%d")
 
     by_size = size_mb >= rotate_mb
     by_date = mtime_day != utc_date()
     if not (by_size or by_date):
         return None
 
-    stamp = datetime.utcnow().strftime("%Y-%m-%dT%H%M%S") if by_size else mtime_day
+    stamp = datetime.now(timezone.utc).replace(tzinfo=None).strftime("%Y-%m-%dT%H%M%S") if by_size else mtime_day
     out = dest_dir / "runtime" / f"runtime_{stamp}.tar.gz"
     _safe_mkdir(out.parent)
     n = _tar_gz(out, [runtime_path], base_dir=runtime_path.parent)
@@ -61,11 +61,11 @@ def rotate_runtime(runtime_path: Path, dest_dir: Path) -> Optional[Path]:
 def archive_old_json(src_dir: Path, dest_dir: Path, days: int, label: str, max_files: int = 5000) -> Optional[Path]:
     if not src_dir.exists():
         return None
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
     candidates: List[Path] = []
     for f in src_dir.glob("*.json"):
         try:
-            if datetime.utcfromtimestamp(f.stat().st_mtime) < cutoff:
+            if datetime.fromtimestamp(f.stat().st_mtime, timezone.utc).replace(tzinfo=None) < cutoff:
                 candidates.append(f)
         except FileNotFoundError:
             continue
@@ -106,7 +106,7 @@ def rotate_embeddings_index(index_path: Path, dest_dir: Path) -> Optional[Path]:
     truncate_after = os.getenv("LIRA_EMBED_ARCHIVE_TRUNCATE", "0") == "1"
 
     size_mb = index_path.stat().st_size / (1024 * 1024)
-    mtime_day = datetime.utcfromtimestamp(index_path.stat().st_mtime).strftime("%Y-%m-%d")
+    mtime_day = datetime.fromtimestamp(index_path.stat().st_mtime, timezone.utc).replace(tzinfo=None).strftime("%Y-%m-%d")
     should = (size_mb >= rotate_mb) or (rotate_daily and mtime_day != utc_date())
     if not should:
         return None
@@ -126,6 +126,13 @@ def run(days_events: int = 7, days_rebuild: int = 14) -> None:
     archive_root = Path(os.getenv("LIRA_ARCHIVE_ROOT", P.get("ARCHIVE_ROOT", "")) or "")
     if not archive_root:
         append_event("archive_skipped", "archive_manager", {"reason": "no_archive_root"})
+        return
+
+    ready, why = external_medium_ready(archive_root)
+    if not ready:
+        append_event("archive_skipped", "archive_manager",
+                     {"reason": "archive_root_unavailable", "detail": why, "root": str(archive_root)})
+        print(f"[archive_manager] pomijam — nie ma gdzie archiwizować: {archive_root} ({why})")
         return
     _safe_mkdir(archive_root)
 

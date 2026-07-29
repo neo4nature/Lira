@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -11,7 +11,7 @@ from agents.memory.memory_loader import read_json, write_json
 from agents.core.runtime_stream import append_event, runtime_stream_path
 
 def utc_now() -> str:
-    return datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds") + "Z"
 
 def _read_last_lines(fp: Path, max_lines: int = 2000) -> List[Dict[str, Any]]:
     if not fp.exists():
@@ -34,7 +34,7 @@ def _read_last_lines(fp: Path, max_lines: int = 2000) -> List[Dict[str, Any]]:
 
 def summarize(window_minutes: int = 60, max_lines: int = 2000) -> Dict[str, Any]:
     p = paths()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     cutoff = now - timedelta(minutes=window_minutes)
     events = _read_last_lines(runtime_stream_path(), max_lines=max_lines)
 

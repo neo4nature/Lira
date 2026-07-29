@@ -5,7 +5,7 @@ Stores last selected profile to data/shared_context/state/voice.json
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -16,7 +16,7 @@ def _state_path() -> Path:
     return Path(__file__).resolve().parents[4] / "data" / "shared_context" / "state" / "voice.json"
 
 def _ts() -> str:
-    return datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds") + "Z"
 
 def load_profiles() -> Dict[str, Any]:
     return json.loads(_profiles_path().read_text(encoding="utf-8"))

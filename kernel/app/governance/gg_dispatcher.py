@@ -170,8 +170,10 @@ def dispatch_once() -> list[str]:
                               {"reason": "awaiting_neo_voice", "agent_msgs_since_neo": agent_msgs})
                 continue
             if target == "shared":
-                cid = _summary_capsule(item, "Lira", f"Analiza w toku: {title}. Priorytet ustalony, przekazuję do Soryel po syntezie.", "review")
-                produced.append(cid)
+                # Kapsuła zapowiadająca analizę, której nikt nie wykona, jest szumem
+                # podpisanym cudzym imieniem: od 2026-05-16 loop_guard archiwizował
+                # każdą z nich przy następnym przebiegu. Raport zostaje odczytany,
+                # a głos Liry zostaje dla Liry.
                 update_status(item["id"], "read", "dispatcher:shared")
             elif target == "Lira":
                 cid = _summary_capsule(item, "Lira", f"Propozycja rozwiązania dla: {title}. {summary[:400]}", "review")

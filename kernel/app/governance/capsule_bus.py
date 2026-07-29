@@ -22,7 +22,7 @@ DB_PATH = paths()["SHARED_CONTEXT_DIR"] / "state" / "capsule_bus.db"
 ALLOWED_TYPES = {"fact", "interpretation", "hypothesis", "decision", "doubt", "task", "implementation", "result", "summary", "proposal", "review", "stalemate", "chat_message"}
 ALLOWED_WEIGHTS = {"changes_trajectory", "commentary", "archive"}
 ALLOWED_LAYERS = {"shared", "working", "reflective"}
-ALLOWED_OWNERS = {"Neo", "Soryel", "Lira", "Xian", "shared"}
+ALLOWED_OWNERS = {"Neo", "Soryel", "Lira", "Xian", "Ekosystem", "shared"}
 ALLOWED_STATUSES = {"new", "read", "in_progress", "answered", "archived", "blocked", "proposal", "review", "revise", "approved_auto", "awaiting_neo", "rejected", "stalemate", "claimed", "delivered", "queued", "retry_pending"}
 
 # Lease/retry (plan szyny 2026-06-12, Soryel+Lira): 30 min awaryjnego TTL,

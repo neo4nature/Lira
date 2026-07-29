@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Dict, Any
 
@@ -37,7 +37,7 @@ def build_index(memory_dir: Path, limit: int = 2000) -> Dict[str, Any]:
     files.sort(key=lambda x: x.mtime, reverse=True)
 
     return {
-        "updated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "updated_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds") + "Z",
         "count": len(files),
         "files": [asdict(f) for f in files],
     }

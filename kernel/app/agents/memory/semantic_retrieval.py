@@ -14,6 +14,7 @@ import json
 import math
 from collections import deque
 import os
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
@@ -38,15 +39,18 @@ except Exception:
     _turmalin_iter_recent = None
 
 
-_CHAT_BUSY_FLAG = Path(os.getenv(
-    "LIRA_CHAT_BUSY_FLAG",
-    "${LIRA_ROOT:-/opt/lira}/kernel/data/runtime/state/ollama_chat_busy.flag"
-))
-_DEFER_ON_CHAT = os.getenv("LIRA_DEFER_EMBEDS_ON_CHAT", "1") == "1"
+from xian.chat_busy import is_chat_busy as _is_chat_busy
+
+QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 
 
-def _ollama_embed(model: str, text: str, timeout_s: int = int(os.getenv("LIRA_OLLAMA_EMBED_TIMEOUT", "1800"))) -> Optional[List[float]]:
-    if _DEFER_ON_CHAT and _CHAT_BUSY_FLAG.exists():
+def _ollama_embed(
+    model: str,
+    text: str,
+    timeout_s: int = int(os.getenv("LIRA_OLLAMA_EMBED_TIMEOUT", "1800")),
+    defer_on_chat: bool = True,
+) -> Optional[List[float]]:
+    if defer_on_chat and _is_chat_busy():
         log.info("[semantic_retrieval] defer embed: Xian chat busy")
         return None
     text = text[:600]
@@ -111,6 +115,101 @@ def _iter_records(index_path: Path, max_records: int = 50_000) -> Iterable[Dict[
         except Exception:
             continue
 
+
+
+def search_live(query: str, top_k: int = 4) -> List[Dict[str, Any]]:
+    """Wyszukiwanie dla ścieżki rozmowy: ograniczone z góry i bez czekania.
+
+    Pomija embeddings_index.jsonl (setki MB, skan liniowy) i pyta tylko indeks
+    stabilny oraz bufor turmalina. Nie ustępuje fladze zajętości: flaga chroni
+    rozmowę przed hurtem embeddingów, a to jest jedno krótkie liczenie wektora
+    NA POTRZEBY tej rozmowy — deferral uciszyłby pamięć dokładnie wtedy, gdy
+    jest potrzebna. Hurtownicy (embeddings_batch, turmalin) dalej czekają.
+
+    Pytanie dostaje przedrostek zalecany przez mxbai (model asymetryczny:
+    przedrostek TYLKO po stronie zapytania, dokumenty w indeksie są bez niego).
+    Bez niego temat nieobecny w indeksie dostawał 0.78, a obecny 0.74 — czyli
+    ranking mierzył rejestr wypowiedzi, nie treść. Z przedrostkiem: 0.66 wobec
+    0.86. Dlatego próg ma sens dopiero razem z przedrostkiem.
+
+    Margines jest wąski: szum siada na 0.66-0.71 (rośnie z długością pytania),
+    trafienie na 0.78-0.86, a parafraza omijająca słowa kluczowe ledwie na 0.78.
+    Próg tego nie naprawi — przyczyną jest ziarno indeksu: rekord to całe
+    wejście plus cała odpowiedź, więc wektor uśrednia wymianę zdań i gubi
+    pojedynczy fakt. Właściwa poprawka to drobniejsze kawałki przy indeksowaniu.
+    """
+    q = (query or "").strip()
+    if not q:
+        return []
+
+    model = os.getenv("LIRA_EMBED_MODEL", "mxbai-embed-large:latest")
+    timeout_s = int(os.getenv("LIRA_LIVE_EMBED_TIMEOUT", "25"))
+    min_score = float(os.getenv("LIRA_LIVE_MIN_SCORE", "0.75"))
+    qvec = _ollama_embed(model, QUERY_PREFIX + q, timeout_s=timeout_s, defer_on_chat=False)
+    if qvec is None:
+        return []
+
+    merged: List[Dict[str, Any]] = []
+    try:
+        if _base_search_by_vec is not None:
+            merged.extend(_base_search_by_vec(qvec, top_k=top_k))
+    except Exception as exc:
+        log.warning("[semantic_live] base_index search failed: %s", exc)
+
+    try:
+        if _turmalin_iter_recent is not None:
+            scored: List[Tuple[float, Dict[str, Any]]] = []
+            cap = int(os.getenv("LIRA_LIVE_TURMALIN_MAX", "2000"))
+            for rec in _turmalin_iter_recent(max_records=cap):
+                vec = rec.get("vector")
+                if not isinstance(vec, list) or len(vec) != len(qvec):
+                    continue
+                score = _cosine(qvec, vec)
+                scored.append((score, {
+                    "id": rec.get("id"),
+                    "score": round(float(score), 5),
+                    "source": "turmalin_cache",
+                    "text": rec.get("text", ""),
+                    "kind": rec.get("kind", "temp"),
+                }))
+            scored.sort(key=lambda t: t[0], reverse=True)
+            merged.extend([d for _, d in scored[:top_k]])
+    except Exception as exc:
+        log.warning("[semantic_live] turmalin_cache search failed: %s", exc)
+
+    best: Dict[str, Dict[str, Any]] = {}
+    for item in merged:
+        rid = str(item.get("id") or "")
+        if not rid:
+            continue
+        if rid not in best or float(item.get("score", 0)) > float(best[rid].get("score", 0)):
+            best[rid] = item
+    # Najświeższe rekordy to ta sama rozmowa, którą wołający i tak ma w oknie —
+    # bez tego pamięć oddaje echo ostatnich minut zamiast tego, co wypadło z okna.
+    min_age_s = float(os.getenv("LIRA_LIVE_MIN_AGE_S", "1800"))
+    now = time.time()
+    hits = sorted(
+        (
+            d for d in best.values()
+            if float(d.get("score", 0)) >= min_score
+            and (not d.get("created_ts") or now - float(d["created_ts"]) >= min_age_s)
+        ),
+        key=lambda d: float(d.get("score", 0)),
+        reverse=True,
+    )
+    # Indeks trzyma powtórzenia tej samej rozmowy pod różnymi id — bez tego
+    # jeden fragment zajmuje cztery miejsca w oknie Xiana.
+    out: List[Dict[str, Any]] = []
+    seen: set = set()
+    for item in hits:
+        key = " ".join((item.get("text") or "").split())[:120].lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(item)
+        if len(out) >= top_k:
+            break
+    return out
 
 
 def search(query: str, top_k: int = 6) -> List[Dict[str, Any]]:

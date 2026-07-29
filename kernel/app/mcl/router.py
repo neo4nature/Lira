@@ -8,6 +8,7 @@ from typing import Any, Dict
 import requests
 
 from config import runtime_dir
+from xian.chat_busy import chat_busy, is_chat_busy
 from reflex.reflex_commands import try_handle_reflex
 from agents.memory.memory_loader import read_json, write_json
 from agents.policy.policy_enforcer import TickBudget
@@ -119,15 +120,16 @@ def _get_identity_core() -> str:
     return _identity_core_cache
 
 
-def _get_xian_v4_identity() -> str:
-    """Pełna tożsamość Xiana z kernel/data/memory/identity/xian/ (loader)."""
-    try:
-        from xian.identity_loader import get_xian_identity
-        return get_xian_identity()
-    except Exception as exc:
-        import logging
-        logging.getLogger("mcl.router").warning("[router] xian identity_loader failed: %s", exc)
-        return _get_identity_core()
+# Modelfile xian-v4-chat niesie tożsamość w SYSTEM (550 znaków, 6 zasad rdzeniowych)
+# i renderer gemma4 ją dostarcza — potwierdzone pomiarem: 12-tokenowe pytanie daje
+# prompt_eval_count=228, a model przedstawia się sam. Doklejanie tu pełnych 12,4 KB
+# z plików dawało 5975 tokenów przy num_ctx=4096, więc Ollama ucinała 1879 od przodu
+# (WARN truncating, keep=4) — kasując dokładnie tę tożsamość, po cichu.
+_XIAN_V4_NOTE = (
+    "Tryb: kanał automatyczny ekosystemu, nie rozmowa na żywo z Neo.\n"
+    "Rozmówcy: Soryel (precyzja, straż), Lira (intuicja, relacja), Neo (ostatni głos).\n"
+    "Odpowiadasz zwięźle i konkretnie. Brak danych nazywasz wprost, nie zgadujesz."
+)
 
 
 def _wrap_prompt(user_prompt: str, model: str = "") -> str:
@@ -137,7 +139,7 @@ def _wrap_prompt(user_prompt: str, model: str = "") -> str:
         use_v4 = is_xian_model(model) and model != "xian:latest" and model != "xian"
     except Exception:
         use_v4 = False
-    identity = _get_xian_v4_identity() if use_v4 else _get_identity_core()
+    identity = _XIAN_V4_NOTE if use_v4 else _get_identity_core()
     if identity:
         parts.append(identity)
     parts.append(_policy_envelope(_get_bus()))
@@ -281,6 +283,12 @@ def route(prompt: str, depth: str = "auto", num_predict: int | None = None, *, i
     if not interactive:
         if phase_name != "ACT":
             return f"[router_blocked] LLM calls allowed only in ACT phase (current={phase_name or 'UNKNOWN'})"
+        # Flaga była dotąd jednokierunkowa: generatory ją podnosiły, ustępowały jej
+        # tylko embeddery. Nocny cykl i executor mieliły więc równolegle na czterech
+        # rdzeniach — 2026-07-28 jedno zapytanie rosło z ~2m20s do 6m03s. Sprawdzamy
+        # przed consume(), żeby odrzucone wywołanie nie zjadało budżetu ticku.
+        if is_chat_busy():
+            return "[router_busy] generation in progress elsewhere"
         if not _budget.consume(1):
             _update_policy_runtime(policy, selected_model=model, budget_allowed=budget_allowed, budget_remaining=_budget.remaining, enforce=enforce, reason=reason + ";budget_exhausted")
             return f"[router_budget_exhausted] model={model} tick={tick_id} remaining={_budget.remaining}"
@@ -299,9 +307,10 @@ def route(prompt: str, depth: str = "auto", num_predict: int | None = None, *, i
     except Exception:
         pass
     try:
-        r = requests.post(OLLAMA_URL, json=payload, timeout=(10, int(os.getenv("LIRA_OLLAMA_GENERATE_TIMEOUT", "10800"))))
-        r.raise_for_status()
-        data = r.json()
+        with chat_busy():
+            r = requests.post(OLLAMA_URL, json=payload, timeout=(10, int(os.getenv("LIRA_OLLAMA_GENERATE_TIMEOUT", "10800"))))
+            r.raise_for_status()
+            data = r.json()
         _update_policy_runtime(policy, selected_model=model, budget_allowed=budget_allowed, budget_remaining=_budget.remaining, enforce=enforce, reason=reason + ";ok")
         return (data.get("response") or "").strip()
     except Exception as e:

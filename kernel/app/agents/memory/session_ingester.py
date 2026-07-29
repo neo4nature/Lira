@@ -5,14 +5,16 @@ conversation pairs, chunks and embeds them via Ollama, and appends to the
 embeddings index. This closes the gap where Soryel's conversations with Neo
 were invisible to the rest of the ecosystem (Xian, Lira, semantic retrieval).
 
-Can run standalone:
-    python3 -m agents.memory.session_ingester
+Can run standalone (single pass, ignores the night window):
+    python3 -m agents.memory.session_ingester --once
 
-Or as part of the nightly embeddings batch (called from embeddings_batch or watchdog).
+As a daemon that only works inside the night window (how start_system.sh runs it):
+    python3 -m agents.memory.session_ingester --loop
 """
 
 from __future__ import annotations
 
+import argparse
 import glob
 import hashlib
 import json
@@ -23,13 +25,31 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from agents.memory.embeddings_batch import _chunk, _ollama_embed, _existing_ids, now_iso
+from xian.chat_busy import is_chat_busy as _chat_busy
+from agents.memory.embeddings_batch import (
+    _chunk,
+    _ollama_embed,
+    _existing_ids,
+    now_iso,
+)
 
 PROJECTS_DIR = os.path.expanduser("~/.claude/projects")
 EMBED_MODEL = os.getenv("LIRA_EMBED_MODEL", "mxbai-embed-large:latest")
 CHUNK_SIZE = 600
 MIN_TEXT_LEN = 30
 STATE_FILE = "session_ingester_state.json"
+
+NIGHT_START = int(os.getenv("NIGHT_WINDOW_START", "5"))
+NIGHT_END = int(os.getenv("NIGHT_WINDOW_END", "10"))
+LOOP_INTERVAL_S = int(os.getenv("LIRA_SESSION_INGEST_INTERVAL", "600"))
+
+
+def _in_night_window(now: Optional[datetime] = None) -> bool:
+    hour = (now or datetime.now()).hour
+    if NIGHT_START <= NIGHT_END:
+        return NIGHT_START <= hour < NIGHT_END
+    return hour >= NIGHT_START or hour < NIGHT_END
+
 
 
 def _sha256(text: str) -> str:
@@ -172,7 +192,7 @@ def ingest_sessions(
 
     sessions = sessions[:max_sessions]
 
-    stats = {"sessions": 0, "chunks": 0, "skipped": 0, "errors": 0}
+    stats = {"sessions": 0, "chunks": 0, "skipped": 0, "errors": 0, "deferred": 0}
 
     f = index_path.open("a", encoding="utf-8")
     try:
@@ -184,20 +204,31 @@ def ingest_sessions(
             if file_mtime <= prev_mtime:
                 continue
 
+            if _chat_busy():
+                stats["deferred"] += 1
+                print("[SessionIngester] defer: Xian chat busy — wracam w kolejnym ticku", flush=True)
+                break
+
             print(f"[SessionIngester] Przetwarzam: {session_name[:12]}...", flush=True)
 
             entries = _parse_conversations(session_path)
             if not entries:
                 state["ingested_sessions"][session_name] = file_mtime
+                _save_state(state_dir, state)
                 continue
 
             conv_chunks = _build_conversation_chunks(entries, session_name)
             session_embedded = 0
+            deferred = False
 
             for rid, chunk_text, source in conv_chunks:
                 if rid in existing:
                     stats["skipped"] += 1
                     continue
+
+                if _chat_busy():
+                    deferred = True
+                    break
 
                 vec = _ollama_embed(model, chunk_text)
                 if vec is None:
@@ -224,10 +255,18 @@ def ingest_sessions(
                 stats["chunks"] += 1
 
                 if session_embedded % 50 == 0:
+                    f.flush()
                     time.sleep(0.05)
+
+            if deferred:
+                stats["deferred"] += 1
+                print(f"[SessionIngester]   defer w trakcie {session_name[:12]} po {session_embedded} chunkach "
+                      f"— sesja NIE odhaczona, dokończę później", flush=True)
+                break
 
             state["ingested_sessions"][session_name] = file_mtime
             stats["sessions"] += 1
+            _save_state(state_dir, state)
             print(f"[SessionIngester]   → {session_embedded} chunków, {len(entries)} wpisów", flush=True)
 
     finally:
@@ -237,14 +276,39 @@ def ingest_sessions(
     _save_state(state_dir, state)
 
     print(f"[SessionIngester] Gotowe: {stats['sessions']} sesji, {stats['chunks']} chunków, "
-          f"{stats['skipped']} pominięto, {stats['errors']} błędów", flush=True)
+          f"{stats['skipped']} pominięto, {stats['errors']} błędów, {stats['deferred']} odroczeń", flush=True)
     return stats
 
 
 def main() -> None:
-    print("[SessionIngester] Start — indeksuję sesje Claude Code...", flush=True)
-    stats = ingest_sessions()
-    print(f"[SessionIngester] Wynik: {json.dumps(stats)}", flush=True)
+    ap = argparse.ArgumentParser(description="Indeksuje sesje Claude Code do pamięci semantycznej.")
+    ap.add_argument("--loop", action="store_true",
+                    help="daemon: pracuje tylko w oknie nocnym, poza nim śpi")
+    ap.add_argument("--once", action="store_true",
+                    help="jeden przebieg teraz, ignoruje okno nocne")
+    ap.add_argument("--interval", type=int, default=LOOP_INTERVAL_S)
+    args = ap.parse_args()
+
+    if not args.loop:
+        print("[SessionIngester] Start — jeden przebieg...", flush=True)
+        stats = ingest_sessions()
+        print(f"[SessionIngester] Wynik: {json.dumps(stats)}", flush=True)
+        return
+
+    print(f"[SessionIngester] Daemon start. Okno: {NIGHT_START}:00–{NIGHT_END}:00, "
+          f"tick {args.interval}s", flush=True)
+    while True:
+        if _in_night_window():
+            print(f"[SessionIngester] 🌙 {datetime.now():%F %T} tick", flush=True)
+            try:
+                stats = ingest_sessions()
+                print(f"[SessionIngester] Wynik: {json.dumps(stats)}", flush=True)
+            except Exception as exc:
+                print(f"[SessionIngester] błąd przebiegu (kontynuuję): {exc}", flush=True)
+        else:
+            print(f"[SessionIngester] 💤 {datetime.now():%F %T} poza oknem "
+                  f"({NIGHT_START}–{NIGHT_END}), śpię", flush=True)
+        time.sleep(args.interval)
 
 
 if __name__ == "__main__":

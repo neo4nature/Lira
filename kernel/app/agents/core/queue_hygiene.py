@@ -3,7 +3,8 @@ from typing import Any, Dict, List, Optional
 from pathlib import Path
 
 from config import paths
-from agents.memory.memory_loader import read_json, write_json
+from agents.core.queue_utils import mutate
+from agents.memory.memory_loader import write_json
 
 DEFAULT_MAX_TASKS = 500
 DEFAULT_TTL_SECONDS = 7 * 24 * 3600  # 7 days
@@ -30,10 +31,25 @@ def hygiene(max_tasks: int = DEFAULT_MAX_TASKS,
     q_file = Path(p["QUEUE_FILE"])
     q_file.parent.mkdir(parents=True, exist_ok=True)
 
-    queue: List[Dict[str, Any]] = read_json(str(q_file), default=[])
-    if not isinstance(queue, list):
-        queue = []
+    # Przycinanie musi widzieć ten sam stan, który nadpisze — inaczej zadanie
+    # dołożone w trakcie liczenia przepada razem z nadmiarem.
+    stats: Dict[str, Any] = {}
 
+    def _prune(queue: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        stats.update(_plan(p, queue, max_tasks, ttl_seconds, overflow_keep))
+        return stats.pop("_kept")
+
+    if mutate(_prune) is None:
+        return {"ok": False, "reason": "queue_locked"}
+
+    return {"ok": True, **stats}
+
+
+def _plan(p: Dict[str, Any],
+          queue: List[Dict[str, Any]],
+          max_tasks: int,
+          ttl_seconds: int,
+          overflow_keep: int) -> Dict[str, Any]:
     now = time.time()
     kept: List[Dict[str, Any]] = []
     expired: List[Dict[str, Any]] = []
@@ -72,10 +88,8 @@ def hygiene(max_tasks: int = DEFAULT_MAX_TASKS,
         archived = archived[:max(1, overflow_keep)]
         write_json(str(archive_path), archived)
 
-    write_json(str(q_file), kept)
-
     return {
-        "ok": True,
+        "_kept": kept,
         "queue_len_before": len(queue),
         "queue_len_after": len(kept),
         "expired_removed": len(expired),

@@ -36,10 +36,7 @@ from agents.memory.base_index_sqlite import upsert_record as base_upsert
 
 
 # === Chat busy gate ===
-_CHAT_BUSY_FLAG = Path(os.getenv(
-    "LIRA_CHAT_BUSY_FLAG",
-    "${LIRA_ROOT:-/opt/lira}/kernel/data/runtime/state/ollama_chat_busy.flag"
-))
+from xian.chat_busy import chat_busy, is_chat_busy as _is_chat_busy
 
 # === Ollama endpoints ===
 OLLAMA_GENERATE_URL = "http://127.0.0.1:11434/api/generate"
@@ -214,20 +211,21 @@ def _build_event_block(events: List[Dict[str, Any]]) -> str:
 
 
 def _call_ollama_generate(prompt: str) -> str:
-    r = requests.post(
-        OLLAMA_GENERATE_URL,
-        json={
-            "model": LLM_MODEL,
-            "prompt": prompt,
-            "stream": False,
-            "think": False,
-            "options": {
-                "temperature": 0,
-                "num_predict": int(os.getenv("LIRA_NIGHT_MAX_TOKENS", "600")),
+    with chat_busy():
+        r = requests.post(
+            OLLAMA_GENERATE_URL,
+            json={
+                "model": LLM_MODEL,
+                "prompt": prompt,
+                "stream": False,
+                "think": False,
+                "options": {
+                    "temperature": 0,
+                    "num_predict": int(os.getenv("LIRA_NIGHT_MAX_TOKENS", "600")),
+                },
             },
-        },
-        timeout=(10, int(os.getenv("LIRA_OLLAMA_GENERATE_TIMEOUT", "10800"))),
-    )
+            timeout=(10, int(os.getenv("LIRA_OLLAMA_GENERATE_TIMEOUT", "10800"))),
+        )
     r.raise_for_status()
     return (r.json().get("response") or "").strip()
 
@@ -479,7 +477,7 @@ def _write_snapshot_capsules(snapshot_date: str, consolidation: Dict[str, Any]) 
 
 
 def run() -> int:
-    if _CHAT_BUSY_FLAG.exists():
+    if _is_chat_busy():
         print("[night_cycle] defer: Xian chat busy, exiting gracefully")
         return 0
 

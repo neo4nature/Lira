@@ -48,15 +48,11 @@ def _cosine(a: List[float], b: List[float]) -> float:
     return dot / math.sqrt(na * nb)
 
 
-_CHAT_BUSY_FLAG = Path(os.getenv(
-    "LIRA_CHAT_BUSY_FLAG",
-    "${LIRA_ROOT:-/opt/lira}/kernel/data/runtime/state/ollama_chat_busy.flag"
-))
-_DEFER_ON_CHAT = os.getenv("LIRA_DEFER_EMBEDS_ON_CHAT", "1") == "1"
+from xian.chat_busy import is_chat_busy as _is_chat_busy
 
 
 def _ollama_embed(model: str, text: str, timeout_s: int = int(os.getenv("LIRA_OLLAMA_EMBED_TIMEOUT", "1800"))) -> Optional[List[float]]:
-    if _DEFER_ON_CHAT and _CHAT_BUSY_FLAG.exists():
+    if _is_chat_busy():
         _elog.info("[base_index_sqlite] defer embed: Xian chat busy")
         return None
     url = os.getenv("LIRA_OLLAMA_EMBED_URL", "http://127.0.0.1:11434/api/embeddings")

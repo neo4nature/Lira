@@ -48,6 +48,7 @@ def _detect_task_tier(target: str, phase: str) -> str:
     return "analysis"
 
 _last_executed_ts: float = 0.0
+_last_status_prompt: str = ""
 EXECUTOR_COOLDOWN = float(os.getenv("XIAN_EXECUTOR_COOLDOWN_S", "120"))
 
 
@@ -64,6 +65,10 @@ def _pick_task(queue_file: Path) -> Optional[Dict[str, Any]]:
     if not isinstance(tasks, list):
         return None
     for task in tasks:
+        if not isinstance(task, dict):
+            continue
+        if task.get("status") in {"done", "failed"}:
+            continue
         kind = str(task.get("kind") or "")
         if kind.startswith("event:"):
             continue
@@ -71,6 +76,29 @@ def _pick_task(queue_file: Path) -> Optional[Dict[str, Any]]:
         if isinstance(payload, dict) and payload.get("text"):
             return task
     return None
+
+
+def _mark_task_done(text: str, cap_id: str) -> None:
+    """Odhacz wykonane zadanie — bez tego kolejka-pierwsza mieliłaby je w kółko."""
+    from agents.core.queue_utils import mutate
+
+    def _mark(tasks):
+        for task in tasks:
+            if not isinstance(task, dict) or task.get("status") in {"done", "failed"}:
+                continue
+            if str((task.get("payload") or {}).get("text") or "") != text:
+                continue
+            task["status"] = "done"
+            task["result_capsule_id"] = cap_id
+            task["done_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+            return tasks
+        return None
+
+    try:
+        if mutate(_mark) is None:
+            log.warning("[executor] nie udało się odhaczyć zadania — kolejka zajęta")
+    except Exception as exc:
+        log.warning("[executor] nie udało się odhaczyć zadania: %s", exc)
 
 
 def _pick_capsule_task(state_dir: Path) -> Optional[str]:
@@ -104,29 +132,54 @@ def step(xian_state: Dict[str, Any], paths: Dict[str, Path]) -> Optional[str]:
     phase = str((xian_state.get("snapshot") or {}).get("phase") or "")
     confidence = float(route.get("confidence") or 0.0)
 
-    # Wykonuj tylko w DECIDE z wystarczającą pewnością i mapowanym celem
+    # Faza zostaje twarda — poza ACT router i tak odmówi (gate allow_llm_calls).
     if phase not in ("DECIDE", "ACT"):
         return None
-    if target not in _ROUTE_TO_DEPTH:
-        return None
-    if confidence < 0.6:
-        return None
 
-    depth = _ROUTE_TO_DEPTH[target]
     state_dir = paths.get("STATE_DIR", Path("."))
-    queue_file = paths.get("RUNTIME_DIR", Path(".")) / "queue" / "queue_tasks.json"
+    # Ścieżka z config, nie sklejana z RUNTIME_DIR — odhaczanie idzie przez
+    # queue_utils i musi trafiać w ten sam plik, który czyta _pick_task.
+    queue_file = Path(paths.get("QUEUE_FILE") or paths.get("RUNTIME_DIR", Path(".")) / "queue" / "queue_tasks.json")
 
-    # Wykryj tier i dobierz budżet
-    tier = _detect_task_tier(target, phase)
+    # Najpierw prawdziwa robota z kolejki. Ping statusowy jest tylko wypełniaczem
+    # ciszy — dopóki szedł pierwszy, xian_report.json (zawsze ma summary) zjadał
+    # każdy przebieg i gałąź kolejki nie wykonała się ani razu: 435 kapsuł,
+    # 8 unikalnych pytań, wszystkie ten sam szablon.
+    global _last_status_prompt
+    queue_text = ""
+    task = _pick_task(queue_file)
+    if task:
+        queue_text = str((task.get("payload") or {}).get("text") or "")
+
+    # Route rozstrzyga CZYM wykonać, nie CZY. Bramka celu i pewności obowiązuje
+    # tylko wypełniacz ciszy; zadanie od feedera jest samo w sobie powodem.
+    # Inaczej wykonanie zależało od `pressure >= 0.88` albo 20 zadań w kolejce —
+    # czyli budziło Xiana dokładnie wtedy, gdy maszyna była najbardziej zajęta,
+    # a przy spokojnym systemie kolejka stała bezterminowo (2026-07-28).
+    if not queue_text:
+        if target not in _ROUTE_TO_DEPTH:
+            return None
+        if confidence < 0.6:
+            return None
+
+    depth = _ROUTE_TO_DEPTH.get(target, "fast")
+
+    # Zadanie z kolejki to analiza, nie meldunek — status_only dałby mu 80 tokenów.
+    tier = "analysis" if queue_text else _detect_task_tier(target, phase)
     tier_cfg = _TASK_TIERS[tier]
 
-    # Wybierz prompt
-    prompt = _pick_capsule_task(state_dir)
+    prompt = queue_text
+
     if not prompt:
-        task = _pick_task(queue_file)
-        if task:
-            payload = task.get("payload", {})
-            prompt = str(payload.get("text") or "")
+        status_prompt = _pick_capsule_task(state_dir) or ""
+        # Dedup po TREŚCI, nie po czasie — to samo pytanie nie zasługuje na drugie
+        # mielenie. Ta sama lekcja co przy embeddingach rosnących plików.
+        if status_prompt and status_prompt == _last_status_prompt:
+            log.info("[executor] ping statusowy bez zmian — pomijam wywołanie modelu")
+            return None
+        prompt = status_prompt
+        _last_status_prompt = status_prompt
+
     if not prompt or len(prompt.strip()) < 10:
         return None
 
@@ -169,7 +222,10 @@ def step(xian_state: Dict[str, Any], paths: Dict[str, Path]) -> Optional[str]:
             status="new",
         )
         _last_executed_ts = now
-        log.info("[executor] Wynik zapisany: %s (%d znaków)", cap_id[:8], len(result))
+        if queue_text:
+            _mark_task_done(queue_text, cap_id)
+        log.info("[executor] Wynik zapisany: %s (%d znaków, źródło=%s)",
+                 cap_id[:8], len(result), "kolejka" if queue_text else "ping")
         return cap_id
     except Exception as exc:
         log.warning("[executor] Błąd zapisu kapsuły: %s", exc)

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 from agents.memory.turmalin_cache import (
@@ -90,6 +90,11 @@ def run_once() -> Dict[str, Any]:
         entry["last_ts"] = float(max(float(entry.get("last_ts", ts)), ts))
         seen_counts[rid] = entry
 
+        # Skip if already promoted in a previous tick — promotion is idempotent per record.
+        # Without this guard the same records get upserted every tick → constant disk IO.
+        if bool(entry.get("promoted")):
+            continue
+
         kind = str(rec.get("kind", "temp"))
         meta = rec.get("meta") if isinstance(rec.get("meta"), dict) else {}
         pin = bool(meta.get("pin"))
@@ -107,6 +112,8 @@ def run_once() -> Dict[str, Any]:
                     created_ts=ts,
                 )
                 promoted.append(rid)
+                entry["promoted"] = True
+                entry["promoted_ts"] = now
 
     # Cleanup old seen entries
     cleaned = 0
@@ -135,7 +142,7 @@ def run_once() -> Dict[str, Any]:
             except Exception:
                 ms = {}
         ms.setdefault("schema", "lira.memory_state.v1")
-        ms["updated_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+        ms["updated_at"] = datetime.now(timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds") + "Z"
         ms["last_promotion"] = {
             "ts": ms["updated_at"],
             "promoted": int(len(promoted)),

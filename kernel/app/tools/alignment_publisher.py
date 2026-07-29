@@ -51,19 +51,30 @@ def _append_jsonl(path: Path, obj: Dict[str, Any]) -> None:
         f.write(json.dumps(obj, ensure_ascii=False) + "\n")
 
 
-_CHAT_BUSY_FLAG = Path(os.getenv("LIRA_CHAT_BUSY_FLAG", "${LIRA_ROOT:-/opt/lira}/kernel/data/runtime/state/ollama_chat_busy.flag"))
+from xian.chat_busy import is_chat_busy as _is_chat_busy
 
 
 def _is_chat_idle() -> bool:
     """Return True if Xian is not generating. Skip embed entirely when busy."""
-    if not _CHAT_BUSY_FLAG.exists():
+    if not _is_chat_busy():
         return True
     _elog.info("[tools.alignment_publisher] DEFER embed — chat_busy active")
     return False
 
 
+# Odmowa połączenia wraca w 0.0s, więc pętla ponawiała ją w pełnym tempie 8s.
+# Przez 131 dni dało to 92 tys. par SEND/FAIL w ollama_embed.log. Gdy nikt nie
+# słucha na 11434, próba za 8s nic nie zmieni — bezpiecznik wydłuża przerwę.
+_CONN_BREAKER_MAX_S = float(os.getenv("LIRA_EMBED_BREAKER_MAX_S", "300"))
+_conn_retry_at = 0.0
+_conn_fail_streak = 0
+
+
 def _ollama_embed(text: str, model: str = EMBED_MODEL, timeout_s: int = int(os.getenv("LIRA_OLLAMA_EMBED_TIMEOUT", "1800"))) -> List[float] | None:
+    global _conn_retry_at, _conn_fail_streak
     if not (text or "").strip():
+        return None
+    if time.time() < _conn_retry_at:
         return None
     if not _is_chat_idle():
         return None
@@ -72,6 +83,7 @@ def _ollama_embed(text: str, model: str = EMBED_MODEL, timeout_s: int = int(os.g
     _elog.info("[%s] SEND embed %d chars model=%s timeout=%ds", caller, len(text), model, timeout_s)
     try:
         r = requests.post(OLLAMA_EMBED_URL, json={"model": model, "input": text}, timeout=timeout_s)
+        _conn_fail_streak = 0
         r.raise_for_status()
         data = r.json()
         emb = (data.get("embeddings") or [[]])[0] if isinstance(data.get("embeddings"), list) else data.get("embedding")
@@ -83,6 +95,13 @@ def _ollama_embed(text: str, model: str = EMBED_MODEL, timeout_s: int = int(os.g
             if isinstance(emb, list) and emb:
                 _elog.info("[%s] RECV embed %d dims in %.1fs", caller, len(emb), time.time() - t0)
                 return emb
+    except requests.exceptions.ConnectionError as exc:
+        _conn_fail_streak += 1
+        pause = min(_CONN_BREAKER_MAX_S, 5.0 * 2 ** min(_conn_fail_streak, 6))
+        _conn_retry_at = time.time() + pause
+        if _conn_fail_streak == 1 or _conn_fail_streak % 50 == 0:
+            _elog.warning("[%s] FAIL embed: brak Ollamy (%d z rzedu), pauza %.0fs: %s", caller, _conn_fail_streak, pause, exc)
+        return None
     except Exception as exc:
         _elog.warning("[%s] FAIL embed after %.1fs: %s", caller, time.time() - t0, exc)
         return None
@@ -362,7 +381,8 @@ def step_once() -> Dict[str, Any] | None:
 
 def _setup_embed_log() -> None:
     from pathlib import Path as _P
-    log_path = _P(os.getenv("LIRA_LOGS_ROOT", "${LIRA_ROOT:-/opt/lira}/kernel/logs")) / "ollama_embed.log"
+    _repo_root = _P(__file__).resolve().parents[3]
+    log_path = _P(os.getenv("LIRA_LOGS_ROOT", str(_repo_root / "kernel/logs"))) / "ollama_embed.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     elog = _elog
     if not elog.handlers:

@@ -12,6 +12,8 @@ import os
 import requests
 from typing import Optional
 
+from xian.chat_busy import chat_busy
+
 # Backend config
 N8N_URL       = os.getenv("SORYEL_N8N_URL", "")           # np. http://localhost:5678/webhook/soryel
 OLLAMA_URL    = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434/api/generate")
@@ -69,15 +71,16 @@ def _via_ollama(text: str) -> Optional[str]:
             prompt += f"{role}: {m['content']}\n"
         prompt += "Soryel:"
 
-        r = requests.post(
-            OLLAMA_URL,
-            json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False,
-                  "think": False,
-                  "options": {"num_predict": 150, "temperature": 0.7}},
-            timeout=30,
-        )
-        r.raise_for_status()
-        return (r.json().get("response") or "").strip() or None
+        with chat_busy():
+            r = requests.post(
+                OLLAMA_URL,
+                json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False,
+                      "think": False,
+                      "options": {"num_predict": 150, "temperature": 0.7}},
+                timeout=30,
+            )
+            r.raise_for_status()
+            return (r.json().get("response") or "").strip() or None
     except Exception:
         return None
 

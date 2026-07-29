@@ -9,7 +9,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from config import runtime_dir, ensure_dirs, paths
+from config import runtime_dir, ensure_dirs, paths, external_medium_ready
 from agents.memory.memory_loader import write_json
 
 def _read_json(path: Path, default: Any) -> Any:
@@ -74,10 +74,15 @@ def _pick_target_dir() -> Path:
     min_free_gb = float(os.environ.get("LIRA_EMERGENCY_MIN_FREE_GB", "0.5"))
     for c in candidates:
         try:
-            c.mkdir(parents=True, exist_ok=True)
+            # Wszystkie warunki sprawdzamy PRZED mkdir. Odwrotna kolejność
+            # zostawiała po odrzuconym kandydacie świeżo utworzone drzewo
+            # katalogów — czasem w punkcie montowania nieobecnego nośnika.
             if secure_root and str(c).startswith(str(Path(secure_root))):
                 if not _is_mountpoint(Path(secure_root)):
                     continue
+            if not external_medium_ready(c)[0]:
+                continue
+            c.mkdir(parents=True, exist_ok=True)
             total, used, free = shutil.disk_usage(str(c))
             if free / (1024**3) >= min_free_gb:
                 return c

@@ -92,7 +92,37 @@ def queue_file() -> Path:
     return Path(env("QUEUE_FILE", str(runtime_dir() / "queue" / "queue_tasks.json"))).resolve()
 
 
+def external_medium_ready(root: Path) -> tuple[bool, str]:
+    """Czy ścieżka leży na naprawdę podpiętym nośniku zewnętrznym.
+
+    Archiwa i zrzuty awaryjne siedzą poza dyskiem systemowym. Pytanie o
+    `exists()` albo o prawo zapisu odpowiada na coś innego, niż nam chodzi:
+    gdy karty nie ma, `mkdir(parents=True)` utworzy jej punkt montowania jako
+    zwykły katalog na dysku systemowym. Kopia będzie udawała kopię, dane trafią
+    na pełny dysk, a nośnik już się w tym miejscu nie zamontuje. Dlatego pytamy
+    o granicę systemu plików. Punkt montowania może leżeć wyżej niż sam cel
+    (cel bywa zwykłym katalogiem na podpiętym dysku), więc szukamy go w górę.
+    """
+    probe = Path(root).resolve()
+    while not probe.exists():
+        if probe.parent == probe:
+            return False, "brak katalogu głównego"
+        probe = probe.parent
+
+    mount = probe
+    while not os.path.ismount(mount) and mount.parent != mount:
+        mount = mount.parent
+    # ten sam nośnik co katalog główny = zwykły katalog na dysku systemowym,
+    # choćby nazywał się jak karta; łapie też bind mount udający nośnik
+    if mount.stat().st_dev == Path("/").stat().st_dev:
+        return False, f"nośnik niezamontowany (najbliższy punkt montowania {mount} to dysk systemowy)"
+    if not os.access(probe, os.W_OK):
+        return False, f"nośnik zamontowany, ale bez prawa zapisu ({probe})"
+    return True, ""
+
+
 def ensure_dirs():
+    guarded = {archive_root(), secure_root()}
     for p in [
         memory_dir(),
         memory_dir() / "root",
@@ -116,6 +146,10 @@ def ensure_dirs():
         shared_context_dir() / "state",
         rebuild_dir(),
     ]:
+        # Nośników zewnętrznych nie tworzymy na ślepo: gdy karty nie ma,
+        # mkdir zrobiłby jej punkt montowania na dysku systemowym.
+        if p in guarded and not external_medium_ready(p)[0]:
+            continue
         try:
             p.mkdir(parents=True, exist_ok=True)
         except (PermissionError, OSError):

@@ -1,5 +1,5 @@
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 from agents.core.storage_guardian import check as storage_check
 from pathlib import Path
@@ -7,7 +7,7 @@ from pathlib import Path
 from agents.core.idle_gate import allows_background
 from config import ensure_dirs, paths
 from agents.memory.memory_loader import read_json, write_json
-from agents.core.queue_utils import load_queue, save_queue
+from agents.core.queue_utils import load_queue, mutate
 from agents.core.runtime_stream import append_event
 from agents.core.snapshot_context import load_snapshot
 
@@ -15,7 +15,7 @@ from config import runtime_dir
 from mcl.router import route
 
 def utc_now():
-    return datetime.utcnow().isoformat(timespec="seconds")
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds")
 
 
 def _memory_mode() -> str:
@@ -141,7 +141,10 @@ def main(sleep_phi=True):
         {"processed": processed, "duration_sec": round(time.time()-t0, 3), "journal_len": len(journal), "snapshot": load_snapshot()},
     )
 
-    save_queue([])
+    # Zdejmujemy TYLKO to, co przerobiliśmy. Refleksja mieli po sekundzie na
+    # zadanie, więc czyszczenie kolejki na ślepo kasowało wszystko, co feedery
+    # i szyna dołożyły przez ten czas.
+    mutate(lambda tasks: [t for t in tasks if t not in queue])
     print(f"✅ Refleksja zakończona. Pamięć -> {P['REBUILD_DIR']}")
 
 if __name__ == "__main__":

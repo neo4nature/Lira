@@ -82,6 +82,14 @@ PY
   fi
 fi
 
+# Jedna pozycja PLAN_ACTIVE.md do kolejki Xiana. Sam feeder nie woła modelu —
+# tylko dokłada zadanie; wykona je executor, gdy trafi na fazę DECIDE.
+run_bg python3 -m xian.plan_feeder || true
+
+# Jedna awaria z logów do kolejki Xiana — osobne, wąskie pytanie. Feeder tylko
+# czyta logi i dokłada zadanie; nie ma prawa wywalić nocnego cyklu.
+run_bg python3 -m xian.error_feeder || true
+
 # Archive/rotate (to SD) when idle
 run_bg python3 -m agents.core.archive_manager || true
 run_bg python3 -m agents.core.runtime_stream --kind night_end --source run_night_cycle.sh --payload "{}"

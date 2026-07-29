@@ -14,7 +14,7 @@ Record schema:
   "id": "...",
   "ts": "...",
   "model": "mxbai-embed-large:latest",
-  "source": {"kind":"file|runtime", "path":"...", "offset":0, "len":1234},
+  "source": {"kind":"file", "path":"...", "offset":0, "len":1234},
   "text": "...",  # truncated chunk
   "vector": [..],
   "meta": {"sha256":"..."}
@@ -127,16 +127,12 @@ def _chunk_pass1(text: str, chunk_size: int) -> Iterable[Tuple[int, str]]:
 
 _EMBED_MAX_CHARS = int(os.getenv("LIRA_EMBED_MAX_CHARS", "600"))
 
-_CHAT_BUSY_FLAG = Path(os.getenv(
-    "LIRA_CHAT_BUSY_FLAG",
-    "${LIRA_ROOT:-/opt/lira}/kernel/data/runtime/state/ollama_chat_busy.flag"
-))
-_DEFER_ON_CHAT = os.getenv("LIRA_DEFER_EMBEDS_ON_CHAT", "1") == "1"
+from xian.chat_busy import is_chat_busy as _is_chat_busy
 
 
 def _ollama_embed(model: str, text: str, timeout_s: int = int(os.getenv("LIRA_OLLAMA_EMBED_TIMEOUT", "1800"))) -> Optional[List[float]]:
     """Call Ollama embeddings endpoint. Supports both /api/embed (new) and /api/embeddings (legacy)."""
-    if _DEFER_ON_CHAT and _CHAT_BUSY_FLAG.exists():
+    if _is_chat_busy():
         print("[embeddings_batch] defer embed: Xian chat busy", flush=True)
         return None
     text = text[:_EMBED_MAX_CHARS]
@@ -194,7 +190,6 @@ def _existing_ids(index_path: Path, limit: int = 200_000) -> set:
 def build_embeddings(
     model: str = "mxbai-embed-large:latest",
     max_files: int = 400,
-    max_runtime_lines: int = 2000,
     chunk_size: int = 900,
     overlap: int = 120,
     top_dirs: Optional[List[Path]] = None,
@@ -214,10 +209,9 @@ def build_embeddings(
     sources: List[Tuple[str, Path]] = []
 
     if top_dirs is None:
-        # default: memory root + diary + rebuild + recent events
+        # default: memory root + diary + recent events
         top_dirs = [
             mem,
-            runtime_dir() / "rebuild",
             shared_context_dir() / "events",
         ]
 
@@ -233,16 +227,6 @@ def build_embeddings(
     # prioritize newest
     cand = sorted(set(cand), key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True)
     cand = cand[:max_files]
-
-    # also embed last window from runtime.jsonl (if exists)
-    runtime_stream = shared_context_dir() / "events" / "runtime.jsonl"
-    runtime_lines: List[str] = []
-    if runtime_stream.exists():
-        try:
-            lines = runtime_stream.read_text(encoding="utf-8", errors="ignore").splitlines()
-            runtime_lines = lines[-min(len(lines), max_runtime_lines):]
-        except Exception:
-            runtime_lines = []
 
     # open index for append
     index_path.parent.mkdir(parents=True, exist_ok=True)
@@ -280,32 +264,6 @@ def build_embeddings(
                 if chunks_embedded % 50 == 0:
                     time.sleep(0.05)
 
-        # runtime window (embed event summaries)
-        for i, line in enumerate(runtime_lines):
-            # keep it short
-            ch = line.strip()
-            if not ch:
-                continue
-            rid = f"runtime:{i}:{_sha256(ch)[:10]}"
-            if rid in existing:
-                skipped += 1
-                continue
-            vec = _ollama_embed(model, ch)
-            if vec is None:
-                skipped += 1
-                continue
-            rec = {
-                "schema": "lira.embedding_record.v1",
-                "id": rid,
-                "ts": now_iso(),
-                "model": model,
-                "source": {"kind": "runtime", "path": str(runtime_stream), "offset": i, "len": len(ch)},
-                "text": ch[:2000],
-                "vector": vec,
-                "meta": {"sha256": _sha256(ch)},
-            }
-            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
-            chunks_embedded += 1
     finally:
         f.close()
 

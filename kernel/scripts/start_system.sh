@@ -153,9 +153,11 @@ if [ "${LIRA_BOOTSTRAP_EMBED_RECORDS:-1}" = "1" ]; then
   echo $! >"$ROOT_DIR/logs/pids/bootstrap_embeddings.pid"
 fi
 
-# Session ingester — embed Claude Code conversations into the ecosystem
-echo "[Lira] Running session ingester (best-effort)"
-(cd "$APP_DIR" && exec python3 -m agents.memory.session_ingester >"$ROOT_DIR/logs/session_ingester.log" 2>&1) &
+# Session ingester — embed Claude Code conversations into the ecosystem.
+# Daemon: pracuje tylko w oknie nocnym, więc restart w środku dnia nie zabiera CPU Xianowi.
+echo "[Lira] Starting session ingester (night window daemon)"
+(cd "$APP_DIR" && exec python3 -m agents.memory.session_ingester --loop \
+  --interval "${LIRA_SESSION_INGEST_INTERVAL:-600}" >"$ROOT_DIR/logs/session_ingester.log" 2>&1) &
 echo $! >"$ROOT_DIR/logs/pids/session_ingester.pid"
 
 # Capsule ingester — embed capsule_bus into embeddings_index (semantic library)

@@ -15,7 +15,7 @@ import os
 import shutil
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -30,7 +30,7 @@ def _log_path() -> Path:
     return Path(__file__).resolve().parents[4] / "logs" / "install.log"
 
 def _ts() -> str:
-    return datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds") + "Z"
 
 def _append_log(line: str) -> None:
     lp = _log_path()
