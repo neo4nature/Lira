@@ -1,0 +1,414 @@
+{
+  "scope": "living_memory_only",
+  "status": "independently_reviewed_2026-10-24",
+  "description": "Source-relative paths and source/export code hashes; no private Git history or original private source text is bundled. Other files are new adapters, documentation or invented examples.",
+  "files": [
+    {
+      "destination": "kernel/app/config.py",
+      "source": "kernel/app/config.py",
+      "source_sha256": "5867a7223cead0f26d4e7090e04162aa8a190ff5a96ad893dd831ab98bec001e",
+      "kind": "rewritten_memory_only_interface",
+      "export_sha256": "d7b9e8bbeffd8b76b2f649be676d599436b8838363397664b60e72a87eeef713"
+    },
+    {
+      "destination": "kernel/app/governance/capsule_bus.py",
+      "source": "kernel/app/governance/capsule_bus.py",
+      "source_sha256": "38739b18769c483deedd739f4ac539760f5664378c61e30d53dcae2ec9c7e93c",
+      "kind": "rewritten_memory_only_interface",
+      "export_sha256": "17b973458a85a402db68ba4da21b36061121b3a1d1732da6d24cfea15e556bf3"
+    },
+    {
+      "destination": "kernel/app/xian/chat_busy.py",
+      "source": "kernel/app/xian/chat_busy.py",
+      "source_sha256": "e9694b971f84d072d261ca0b78a85f084162a4127d64e57012f37fe6e00187e1",
+      "kind": "rewritten_memory_only_interface",
+      "export_sha256": "1a3c183cdd771dc65b87deef20a504a6ffd3549976bead97672153610f6ccd6c"
+    },
+    {
+      "destination": "kernel/app/agents/core/idle_gate.py",
+      "source": "kernel/app/agents/core/idle_gate.py",
+      "source_sha256": "aeea4cddc5847426712d6d8a4b4bc2d9fa04b171bce4d48716b8f2c77b49c50b",
+      "kind": "rewritten_memory_only_interface",
+      "export_sha256": "82b0e0332b8580ab152303f27cbcf8d74d2eac552eb63ec21b1293f1fab4d92d"
+    },
+    {
+      "destination": "kernel/app/agents/core/runtime_stream.py",
+      "source": "kernel/app/agents/core/runtime_stream.py",
+      "source_sha256": "340a3fd26b2583efcfddf37f4056ca2c80758eb9a6ef78a2c5ab22dbd9db4dc7",
+      "kind": "rewritten_memory_only_interface",
+      "export_sha256": "c29d650cf029aba23a720a733da7555820982aeea78dd980418b1d1bde919ea2"
+    },
+    {
+      "destination": "kernel/app/agents/memory/memory_orchestrator.py",
+      "source": "kernel/app/agents/memory/memory_orchestrator.py",
+      "source_sha256": "3ea67f872bed954665ee52947caf78adb6264dc733bf19537d4706daf8d74b55",
+      "kind": "rewritten_memory_only_interface",
+      "export_sha256": "8d238601fc48c3957f6924597600fcb4df685bb2246475c9e88b75c8fb30cdcc"
+    },
+    {
+      "destination": "kernel/app/agents/memory/reconstruction.py",
+      "source": "kernel/app/agents/memory/reconstruction.py",
+      "source_sha256": "345d4fecf9e4d9da2aaa1dd568b3a6bab2ae6c458100af3558167de0abb91fa4",
+      "kind": "rewritten_memory_only_interface",
+      "export_sha256": "fc0d58df3349413c7e7a7725b111d05e1dbb335801ebb73841f7714b9e090994"
+    },
+    {
+      "destination": "kernel/app/agents/memory/prepare_data_night.py",
+      "source": "kernel/app/agents/memory/prepare_data_night.py",
+      "source_sha256": "6f86b15d221c673c89b11d1b4e5cb930500df92d63a9e95ae3f28787b7ada1f0",
+      "kind": "rewritten_memory_only_interface",
+      "export_sha256": "0008c256fc887c74b70e4e1d65737c340e495ccc7ebf28cc6eb4377e86025b6e"
+    },
+    {
+      "destination": "kernel/app/agents/memory/base_index_sqlite.py",
+      "source": "kernel/app/agents/memory/base_index_sqlite.py",
+      "source_sha256": "ed3af782bf5648549157538ab9e577606af48f394ab93a65a4dd0300569b082b",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "d459dd913fc65e9fb740d70c67055c7c02117f999fb7d90738bcfffb766412fb"
+    },
+    {
+      "destination": "kernel/app/agents/memory/capsule_ingester.py",
+      "source": "kernel/app/agents/memory/capsule_ingester.py",
+      "source_sha256": "3021adb0ce673c1e811d6b5be598257bcfd0a844ea30a846caeff02c34230476",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "b9011f3a1b8a442729c096edbeb17db0bde6749d097492504b68c91aaeec74e8"
+    },
+    {
+      "destination": "kernel/app/agents/memory/daily_context.py",
+      "source": "kernel/app/agents/memory/daily_context.py",
+      "source_sha256": "ac5cf1f4d32b9923125dab5c64ca3a4a9f9a3d9005b9d4b2f26063ca19a77958",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "cf0eebe0381a5c6e9d6357b16104003d1f5626fa340da75fdbe10bfdd023ab35"
+    },
+    {
+      "destination": "kernel/app/agents/memory/diary.py",
+      "source": "kernel/app/agents/memory/diary.py",
+      "source_sha256": "6c7d8bc8a96973d8da02a34c41347d4e886dbb29af69cc036b8027ec37a66fe9",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "aff5d3bb3d066098ebc54ccc7e739ae549f4c52d50234bc47331e520aeccca40"
+    },
+    {
+      "destination": "kernel/app/agents/memory/embeddings_batch.py",
+      "source": "kernel/app/agents/memory/embeddings_batch.py",
+      "source_sha256": "ac0c409032ff92e3c2c4473337d3ab4e098f64bc88cfe0fc0229186074ca3aba",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "4c48be59d9260d1e5e7f53652f477d46e45c566436ebc8f16926c413e6a1b034"
+    },
+    {
+      "destination": "kernel/app/agents/memory/embeddings_measure.py",
+      "source": "kernel/app/agents/memory/embeddings_measure.py",
+      "source_sha256": "dcacf8c6e6862362fb71aea169bc5181bcea081767f481a2981795f37dfc4e0e",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "e57048dcedea977e147902e066947cd6f3c798a99a432deafd5e1518cec68de2"
+    },
+    {
+      "destination": "kernel/app/agents/memory/index_freshness.py",
+      "source": "kernel/app/agents/memory/index_freshness.py",
+      "source_sha256": "0160ee90a6692ec01a2cce295ee6e3cca9e53218268623a63f488d12e1e3d5e3",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "99fec5a9d9e516f880749ff2d6992278b671bc9264ac64af6d77ae4eb841f371"
+    },
+    {
+      "destination": "kernel/app/agents/memory/index_memory.py",
+      "source": "kernel/app/agents/memory/index_memory.py",
+      "source_sha256": "66bffdb7729d573bf6f1b02b9a7fdcada26c1c795a211fb29c2daad66f8eeb6d",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "fe0175a48757ff20b7aeb803ff611a878651cc582d22301d664e6089e55df463"
+    },
+    {
+      "destination": "kernel/app/agents/memory/lexical_retrieval.py",
+      "source": "kernel/app/agents/memory/lexical_retrieval.py",
+      "source_sha256": "638a1e03c7b0ea407997eccaf25fc034b8bf1ddaeee42d9937419c1b3e2473a7",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "e49334a538b1303a81a3cec94d42922362118a75f8e3c3fb3a5b22034097b3b7"
+    },
+    {
+      "destination": "kernel/app/agents/memory/macierz_indeksu.py",
+      "source": "kernel/app/agents/memory/macierz_indeksu.py",
+      "source_sha256": "7c1695915fd49235219b0bef56daa211fb38ec36ca143b4e8125b28b20e30472",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "01fad31e723dbe6db2b0fb3fac91624d7b3de459d010109d106df95c8a477b22"
+    },
+    {
+      "destination": "kernel/app/agents/memory/memory_loader.py",
+      "source": "kernel/app/agents/memory/memory_loader.py",
+      "source_sha256": "5410e328d921f5aeedd66a03741df8733a0d67245b200cb99f73a95ad975d619",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "932f2cc6f711417ddc2eff84bfb82ee93bdac67ece0ae44e8a37bc3d2e7cd7ee"
+    },
+    {
+      "destination": "kernel/app/agents/memory/recall.py",
+      "source": "kernel/app/agents/memory/recall.py",
+      "source_sha256": "343a512f0d47ae3674a9dadf381aced3cc3544d6c94f1d24b8805a3296d5c406",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "205ed6ad62c95513169000e909dbcd17aedffc5cb9d27425f81d8f3e18fb0316"
+    },
+    {
+      "destination": "kernel/app/agents/memory/retrieval_usage.py",
+      "source": "kernel/app/agents/memory/retrieval_usage.py",
+      "source_sha256": "31a8b985db599ea4d5958812ed1aef65c96631b1c03cc16562795c44808bf24f",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "032ced8847eb74a46240b1b621fa9e53f063ed2e39b34a8079485e02ade10f0f"
+    },
+    {
+      "destination": "kernel/app/agents/memory/semantic_retrieval.py",
+      "source": "kernel/app/agents/memory/semantic_retrieval.py",
+      "source_sha256": "6974e95a349f1ed0d92d48a9d4139efc03a7473efbe73990677e343b93384570",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "367a52bb200cd89ddbc35f4526c05a04d8bf7592d87b596cc6d6b1f5f6be4121"
+    },
+    {
+      "destination": "kernel/app/agents/memory/source_registry.py",
+      "source": "kernel/app/agents/memory/source_registry.py",
+      "source_sha256": "3336ffa6da0853e82b19fec6d04967f2741d9367bcc6419e8b8ea85af205a17b",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "3d63acec4f81f69b83d779c332a0c6bf497c4f54385c6c350279b621e2f65553"
+    },
+    {
+      "destination": "kernel/app/agents/memory/turmalin_cache.py",
+      "source": "kernel/app/agents/memory/turmalin_cache.py",
+      "source_sha256": "caae0055c9a684655c40e95a5a97bc96c40c66937935edc711b84cddf6e94aa4",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "21183a7e0eeab62a1fdb82adbc998827ec364f588dbb60dc5aed768271b07131"
+    },
+    {
+      "destination": "kernel/app/xian/night_core.py",
+      "source": "kernel/app/xian/night_core.py",
+      "source_sha256": "458e60f55b5d713af0d5a271305f5dad8d9795db06ae993209eeb7b3d969d89b",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "1dc22ccfcbb50b9cba75b7fdbe1e9aeed09d1206408eb33461f4cd1e31133d6a"
+    },
+    {
+      "destination": "kernel/app/xian/social_core.py",
+      "source": "kernel/app/xian/social_core.py",
+      "source_sha256": "647427c00db67a15d851c65780ac35f09e31add77dedeab0c8bd54db37cc6e72",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "71f99741546f79cd2d10eb9cc360f65e4793d5f8f398657715a01a853ec93976"
+    },
+    {
+      "destination": "kernel/app/xian/night_batches.py",
+      "source": "kernel/app/xian/night_batches.py",
+      "source_sha256": "1267c13e87710550c229c4b19d48360bfc55b4c20eb970a4299e89d93035540b",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "f3487dcd26ed70d6d53cc4cee56db24531a719d05da4bbf0a7130813cba6c008"
+    },
+    {
+      "destination": "kernel/app/xian/decision_registry.py",
+      "source": "kernel/app/xian/decision_registry.py",
+      "source_sha256": "a2821b14dde9ca090f6274f95955afcf4d727e79ef55ca738b002f5944becce2",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "6e73c70d49dd70b969ae359fd34014fd058de719b84b4434a6b43fbf04438e1c"
+    },
+    {
+      "destination": "kernel/app/tools/stol_szukaj.py",
+      "source": "kernel/app/tools/stol_szukaj.py",
+      "source_sha256": "5483bc996f3560fcf244db81b6278198c62a74a099c280b2e638828333c18190",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "9f9c47ddc4801d2e33c9e4612f7b78c183d5b991aef940d68d71af1cb6e47f69"
+    },
+    {
+      "destination": "kernel/app/tools/trafienie.py",
+      "source": "kernel/app/tools/trafienie.py",
+      "source_sha256": "3264f07cb4f54fe0f89f5d389802fdf560c8b61273acbc1c227e08c05667ad3b",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "e46a3730cb57e62ae67c98ad29be3ffee6cb211ab588e0a130d4dba60b5d2d5c"
+    },
+    {
+      "destination": "kernel/app/utils/state_io.py",
+      "source": "kernel/app/utils/state_io.py",
+      "source_sha256": "98421cc38251e16598b8abc100b3538d46c16840bc46d93e1c617d7f53aa16cd",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "541350369ed1eaf032d84c059fbb4aba78cd05a23f4065513000d89e2b2e9915"
+    },
+    {
+      "destination": "kernel/app/tests/test_embeddings_chunking.py",
+      "source": "kernel/app/tests/test_embeddings_chunking.py",
+      "source_sha256": "accebd90ae8c34714d537f9908125a554759d6fb8e57ec8ed2c9acb1e44d532f",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "ac9ffbce67d5588bfb37500180bef8418f0925c6b8567e511b6a844af260925c"
+    },
+    {
+      "destination": "kernel/app/tests/test_embeddings_measure.py",
+      "source": "kernel/app/tests/test_embeddings_measure.py",
+      "source_sha256": "2dc7d7ee4c7b3a8d8cd052f24b607b7d0e21e54f16c9c10a2081f0bd4e5dd284",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "174eeefde9fc959dc6cc01dbb36cb0d4b6cc3b329d2a8e7d662e820e720c8c00"
+    },
+    {
+      "destination": "kernel/app/tests/test_retrieval_usage.py",
+      "source": "kernel/app/tests/test_retrieval_usage.py",
+      "source_sha256": "278005e5449480c086cc9cf9d896d739b4438accdf8c6038e29570e71563742d",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "67e78c5fea03b9a8c3f367ebde65c92ec34dc934b5b6e9192098f5de3ea24ada"
+    },
+    {
+      "destination": "kernel/app/tests/test_macierz_indeksu.py",
+      "source": "kernel/app/tests/test_macierz_indeksu.py",
+      "source_sha256": "2a72a5f2ffa112dafca3445cbabd563a18b90952f915dd10dfd461ed0c9ca814",
+      "kind": "derived_sanitized_source_or_synthetic_regression",
+      "notes": [
+        "Remove workbench comments/docstrings",
+        "Replace personal role literals with generic roles",
+        "Remove product delivery/entrypoint functions where listed",
+        "Use opt-in backend and memory-local paths where applicable"
+      ],
+      "export_sha256": "e0e4f5978a4a11a5ed77f7ea7874e55cb84ceae169dabef1cb6b65be6c8bb891"
+    }
+  ]
+}

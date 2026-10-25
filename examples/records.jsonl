@@ -1,0 +1,2 @@
+{"id":"note-1","text":"The synthetic observatory stores blue lenses in cabinet A.","author":"Operator","created_at":"2025-01-01T10:00:00+00:00","source_id":"synthetic-observatory","vector":[1.0,0.0,0.0]}
+{"id":"note-2","text":"The synthetic observatory stores red lenses in cabinet B.","author":"Reviewer","created_at":"2025-01-01T11:00:00+00:00","source_id":"synthetic-observatory","vector":[0.0,1.0,0.0]}

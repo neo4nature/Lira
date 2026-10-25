@@ -1,1 +1,1 @@
-"""Xian meta-observer, router and reporter."""
+"""Living-memory library package; no import-time actions."""

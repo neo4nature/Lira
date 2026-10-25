@@ -1,0 +1,322 @@
+{
+  "schema": "lira.memory-release.v1",
+  "scope": "living_memory_only",
+  "date": "2026-10-24",
+  "status": "independently_reviewed_2026-10-24",
+  "contains_personal_data_by_design": false,
+  "source_files_unchanged": true,
+  "network_default": "disabled",
+  "tests": {
+    "passed": 59,
+    "network": "blocked",
+    "data": "synthetic_temporary"
+  },
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 133,
+      "sha256": "1a2d1bd0ba1e27a4c90c66a49ea48e065c8a2bd09aee585706956862be7aaaa1"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "bytes": 663,
+      "sha256": "a16c1b41d956f7175d5dd0cff64ee4ec7c03f4301a1eac6a39cb13d89dc2ccc4"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1075,
+      "sha256": "759605152a953dd7b619d1cbcfb33b4b118ddaa07a20a7a614ad0328f1e35343"
+    },
+    {
+      "path": "PROVENANCE.json",
+      "bytes": 20916,
+      "sha256": "315c7d4355da3b68b2006ec5a75b7cd36948554ce5469e4d3cbb4da1165077ec"
+    },
+    {
+      "path": "README.md",
+      "bytes": 9589,
+      "sha256": "dc9c5ae1cb716ba0aa0a3a07b7a2fba5aef705ba92f48c9d16d828d76d4c2471"
+    },
+    {
+      "path": "SECURITY.md",
+      "bytes": 1020,
+      "sha256": "58d3da6fccc6c86d170fb989c2fee26d6cd932fd26dd7e68eaff8a1c19e6a983"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "bytes": 1751,
+      "sha256": "93c1dba00ebd56ba0f2da900dfc3563e6e1f84f9fd20c6857650ecc6b86052c1"
+    },
+    {
+      "path": "docs/DATA_CONTRACTS.md",
+      "bytes": 3860,
+      "sha256": "c4ce50605070dac2037ecef19179a08384b78595f6ecc2a8669dddb058964771"
+    },
+    {
+      "path": "docs/REVIEW_NOTES.md",
+      "bytes": 3034,
+      "sha256": "25ef1044d8d4a9901f3a32b6d715fe8ec7b5a95efbdf31f9ca958e1050ca0d11"
+    },
+    {
+      "path": "examples/demo.py",
+      "bytes": 1699,
+      "sha256": "9e037d9375a1b02911c2996333e4940d2a78bacf73c4363fb39cfa08a19a241c"
+    },
+    {
+      "path": "examples/ollama_quickstart.py",
+      "bytes": 2020,
+      "sha256": "0dc3b71ef0b1617132d13c02ecd3836eb321be40f9ce366d42bfea32f17eb0ab"
+    },
+    {
+      "path": "examples/records.jsonl",
+      "bytes": 407,
+      "sha256": "6e457baca26dea0b64867f6deb5218d1a61c4f73787ed03f1f554111fa85c4b8"
+    },
+    {
+      "path": "kernel/app/agents/__init__.py",
+      "bytes": 61,
+      "sha256": "327ed47ba8f84ca31e2e124e2461d4ba10a08d06ab0aa3fb98cf5f4236cc58ba"
+    },
+    {
+      "path": "kernel/app/agents/core/__init__.py",
+      "bytes": 61,
+      "sha256": "327ed47ba8f84ca31e2e124e2461d4ba10a08d06ab0aa3fb98cf5f4236cc58ba"
+    },
+    {
+      "path": "kernel/app/agents/core/idle_gate.py",
+      "bytes": 227,
+      "sha256": "82b0e0332b8580ab152303f27cbcf8d74d2eac552eb63ec21b1293f1fab4d92d"
+    },
+    {
+      "path": "kernel/app/agents/core/runtime_stream.py",
+      "bytes": 506,
+      "sha256": "c29d650cf029aba23a720a733da7555820982aeea78dd980418b1d1bde919ea2"
+    },
+    {
+      "path": "kernel/app/agents/memory/__init__.py",
+      "bytes": 61,
+      "sha256": "327ed47ba8f84ca31e2e124e2461d4ba10a08d06ab0aa3fb98cf5f4236cc58ba"
+    },
+    {
+      "path": "kernel/app/agents/memory/base_index_sqlite.py",
+      "bytes": 6072,
+      "sha256": "d459dd913fc65e9fb740d70c67055c7c02117f999fb7d90738bcfffb766412fb"
+    },
+    {
+      "path": "kernel/app/agents/memory/capsule_ingester.py",
+      "bytes": 7925,
+      "sha256": "b9011f3a1b8a442729c096edbeb17db0bde6749d097492504b68c91aaeec74e8"
+    },
+    {
+      "path": "kernel/app/agents/memory/daily_context.py",
+      "bytes": 2067,
+      "sha256": "cf0eebe0381a5c6e9d6357b16104003d1f5626fa340da75fdbe10bfdd023ab35"
+    },
+    {
+      "path": "kernel/app/agents/memory/diary.py",
+      "bytes": 798,
+      "sha256": "aff5d3bb3d066098ebc54ccc7e739ae549f4c52d50234bc47331e520aeccca40"
+    },
+    {
+      "path": "kernel/app/agents/memory/embeddings_batch.py",
+      "bytes": 21737,
+      "sha256": "4c48be59d9260d1e5e7f53652f477d46e45c566436ebc8f16926c413e6a1b034"
+    },
+    {
+      "path": "kernel/app/agents/memory/embeddings_measure.py",
+      "bytes": 6930,
+      "sha256": "e57048dcedea977e147902e066947cd6f3c798a99a432deafd5e1518cec68de2"
+    },
+    {
+      "path": "kernel/app/agents/memory/index_freshness.py",
+      "bytes": 11526,
+      "sha256": "99fec5a9d9e516f880749ff2d6992278b671bc9264ac64af6d77ae4eb841f371"
+    },
+    {
+      "path": "kernel/app/agents/memory/index_memory.py",
+      "bytes": 1464,
+      "sha256": "fe0175a48757ff20b7aeb803ff611a878651cc582d22301d664e6089e55df463"
+    },
+    {
+      "path": "kernel/app/agents/memory/lexical_retrieval.py",
+      "bytes": 14867,
+      "sha256": "e49334a538b1303a81a3cec94d42922362118a75f8e3c3fb3a5b22034097b3b7"
+    },
+    {
+      "path": "kernel/app/agents/memory/macierz_indeksu.py",
+      "bytes": 7760,
+      "sha256": "01fad31e723dbe6db2b0fb3fac91624d7b3de459d010109d106df95c8a477b22"
+    },
+    {
+      "path": "kernel/app/agents/memory/memory_loader.py",
+      "bytes": 1448,
+      "sha256": "932f2cc6f711417ddc2eff84bfb82ee93bdac67ece0ae44e8a37bc3d2e7cd7ee"
+    },
+    {
+      "path": "kernel/app/agents/memory/memory_orchestrator.py",
+      "bytes": 491,
+      "sha256": "8d238601fc48c3957f6924597600fcb4df685bb2246475c9e88b75c8fb30cdcc"
+    },
+    {
+      "path": "kernel/app/agents/memory/prepare_data_night.py",
+      "bytes": 285,
+      "sha256": "0008c256fc887c74b70e4e1d65737c340e495ccc7ebf28cc6eb4377e86025b6e"
+    },
+    {
+      "path": "kernel/app/agents/memory/recall.py",
+      "bytes": 9047,
+      "sha256": "205ed6ad62c95513169000e909dbcd17aedffc5cb9d27425f81d8f3e18fb0316"
+    },
+    {
+      "path": "kernel/app/agents/memory/reconstruction.py",
+      "bytes": 479,
+      "sha256": "fc0d58df3349413c7e7a7725b111d05e1dbb335801ebb73841f7714b9e090994"
+    },
+    {
+      "path": "kernel/app/agents/memory/retrieval_usage.py",
+      "bytes": 11045,
+      "sha256": "032ced8847eb74a46240b1b621fa9e53f063ed2e39b34a8079485e02ade10f0f"
+    },
+    {
+      "path": "kernel/app/agents/memory/reviewed_import.py",
+      "bytes": 5773,
+      "sha256": "c9fc0e9933c552837ce0819c587b9f43f71b822b9a6130e1d4310fa6aba207b6"
+    },
+    {
+      "path": "kernel/app/agents/memory/semantic_retrieval.py",
+      "bytes": 12997,
+      "sha256": "367a52bb200cd89ddbc35f4526c05a04d8bf7592d87b596cc6d6b1f5f6be4121"
+    },
+    {
+      "path": "kernel/app/agents/memory/source_registry.py",
+      "bytes": 5413,
+      "sha256": "3d63acec4f81f69b83d779c332a0c6bf497c4f54385c6c350279b621e2f65553"
+    },
+    {
+      "path": "kernel/app/agents/memory/turmalin_cache.py",
+      "bytes": 4019,
+      "sha256": "21183a7e0eeab62a1fdb82adbc998827ec364f588dbb60dc5aed768271b07131"
+    },
+    {
+      "path": "kernel/app/config.py",
+      "bytes": 2546,
+      "sha256": "d7b9e8bbeffd8b76b2f649be676d599436b8838363397664b60e72a87eeef713"
+    },
+    {
+      "path": "kernel/app/governance/__init__.py",
+      "bytes": 61,
+      "sha256": "327ed47ba8f84ca31e2e124e2461d4ba10a08d06ab0aa3fb98cf5f4236cc58ba"
+    },
+    {
+      "path": "kernel/app/governance/capsule_bus.py",
+      "bytes": 2155,
+      "sha256": "17b973458a85a402db68ba4da21b36061121b3a1d1732da6d24cfea15e556bf3"
+    },
+    {
+      "path": "kernel/app/memory_backend.py",
+      "bytes": 716,
+      "sha256": "c2ce19d9097107b133ebbb9e82f2665593a78eedfdfa817a5b9dcc7509dd3fb1"
+    },
+    {
+      "path": "kernel/app/tests/conftest.py",
+      "bytes": 695,
+      "sha256": "87bb3c3afe758b9e28c07b3c84b75ab50f4bd397fd35894725f7ff4dc74d0690"
+    },
+    {
+      "path": "kernel/app/tests/test_embeddings_chunking.py",
+      "bytes": 3569,
+      "sha256": "ac9ffbce67d5588bfb37500180bef8418f0925c6b8567e511b6a844af260925c"
+    },
+    {
+      "path": "kernel/app/tests/test_embeddings_measure.py",
+      "bytes": 4499,
+      "sha256": "174eeefde9fc959dc6cc01dbb36cb0d4b6cc3b329d2a8e7d662e820e720c8c00"
+    },
+    {
+      "path": "kernel/app/tests/test_macierz_indeksu.py",
+      "bytes": 11758,
+      "sha256": "e0e4f5978a4a11a5ed77f7ea7874e55cb84ceae169dabef1cb6b65be6c8bb891"
+    },
+    {
+      "path": "kernel/app/tests/test_memory_package.py",
+      "bytes": 12018,
+      "sha256": "6ea27eaeccf0a25c1882f4c52677a73b0cebc61b7f9fad167fe10826da412525"
+    },
+    {
+      "path": "kernel/app/tests/test_retrieval_usage.py",
+      "bytes": 2647,
+      "sha256": "67e78c5fea03b9a8c3f367ebde65c92ec34dc934b5b6e9192098f5de3ea24ada"
+    },
+    {
+      "path": "kernel/app/tools/__init__.py",
+      "bytes": 61,
+      "sha256": "327ed47ba8f84ca31e2e124e2461d4ba10a08d06ab0aa3fb98cf5f4236cc58ba"
+    },
+    {
+      "path": "kernel/app/tools/stol_szukaj.py",
+      "bytes": 34429,
+      "sha256": "9f9c47ddc4801d2e33c9e4612f7b78c183d5b991aef940d68d71af1cb6e47f69"
+    },
+    {
+      "path": "kernel/app/tools/trafienie.py",
+      "bytes": 9575,
+      "sha256": "e46a3730cb57e62ae67c98ad29be3ffee6cb211ab588e0a130d4dba60b5d2d5c"
+    },
+    {
+      "path": "kernel/app/utils/__init__.py",
+      "bytes": 61,
+      "sha256": "327ed47ba8f84ca31e2e124e2461d4ba10a08d06ab0aa3fb98cf5f4236cc58ba"
+    },
+    {
+      "path": "kernel/app/utils/state_io.py",
+      "bytes": 1895,
+      "sha256": "541350369ed1eaf032d84c059fbb4aba78cd05a23f4065513000d89e2b2e9915"
+    },
+    {
+      "path": "kernel/app/xian/__init__.py",
+      "bytes": 61,
+      "sha256": "327ed47ba8f84ca31e2e124e2461d4ba10a08d06ab0aa3fb98cf5f4236cc58ba"
+    },
+    {
+      "path": "kernel/app/xian/chat_busy.py",
+      "bytes": 594,
+      "sha256": "1a3c183cdd771dc65b87deef20a504a6ffd3549976bead97672153610f6ccd6c"
+    },
+    {
+      "path": "kernel/app/xian/decision_registry.py",
+      "bytes": 9660,
+      "sha256": "6e73c70d49dd70b969ae359fd34014fd058de719b84b4434a6b43fbf04438e1c"
+    },
+    {
+      "path": "kernel/app/xian/night_batches.py",
+      "bytes": 19709,
+      "sha256": "f3487dcd26ed70d6d53cc4cee56db24531a719d05da4bbf0a7130813cba6c008"
+    },
+    {
+      "path": "kernel/app/xian/night_core.py",
+      "bytes": 25367,
+      "sha256": "1dc22ccfcbb50b9cba75b7fdbe1e9aeed09d1206408eb33461f4cd1e31133d6a"
+    },
+    {
+      "path": "kernel/app/xian/social_core.py",
+      "bytes": 22718,
+      "sha256": "71f99741546f79cd2d10eb9cc360f65e4793d5f8f398657715a01a853ec93976"
+    },
+    {
+      "path": "pytest.ini",
+      "bytes": 68,
+      "sha256": "8265907ae88fb06aa649e325a7c22c83d1fdd8e4d9277781b51ba5d0caf721a3"
+    },
+    {
+      "path": "requirements-test.txt",
+      "bytes": 30,
+      "sha256": "7617ff3f3e6410ee294836978ee6bee967e44fbec3e80df1da0862b847088b53"
+    },
+    {
+      "path": "requirements.txt",
+      "bytes": 27,
+      "sha256": "ab3045b2c6d999fbeef2fcf2363315fead2e90a8f216fc54c458ef5147633bb7"
+    }
+  ],
+  "privacy_scan": "Selected indicators plus explicit source allowlist and manual source review; no proof of anonymity from regex alone."
+}
