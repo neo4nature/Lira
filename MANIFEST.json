@@ -1,14 +1,15 @@
 {
   "schema": "lira.memory-release.v1",
-  "scope": "living_memory_only",
-  "date": "2026-10-24",
-  "status": "independently_reviewed_2026-10-24",
+  "scope": "living_memory_only_with_portable_attention",
+  "date": "2026-11-01",
+  "status": "candidate_pending_independent_review",
+  "base_public_commit": "76d144a78aa63c7b6baa44741e60fa9d02cc2969",
   "contains_personal_data_by_design": false,
-  "source_files_unchanged": true,
+  "source_files_unchanged": false,
   "network_default": "disabled",
   "tests": {
-    "passed": 59,
-    "network": "blocked",
+    "passed": 86,
+    "network": "blocked_by_offline_test_fixture",
     "data": "synthetic_temporary"
   },
   "files": [
@@ -29,13 +30,13 @@
     },
     {
       "path": "PROVENANCE.json",
-      "bytes": 20916,
-      "sha256": "315c7d4355da3b68b2006ec5a75b7cd36948554ce5469e4d3cbb4da1165077ec"
+      "bytes": 22163,
+      "sha256": "0a9a0b5f2a207eacb182dc4e30bc72bc6852c2c0e7bc749e4c1831675868e1fc"
     },
     {
       "path": "README.md",
-      "bytes": 9589,
-      "sha256": "dc9c5ae1cb716ba0aa0a3a07b7a2fba5aef705ba92f48c9d16d828d76d4c2471"
+      "bytes": 10959,
+      "sha256": "e4f9881e7b49e559c69a78f3c882eef1a640aebb7605d1af2e15e449e865cf12"
     },
     {
       "path": "SECURITY.md",
@@ -48,14 +49,34 @@
       "sha256": "93c1dba00ebd56ba0f2da900dfc3563e6e1f84f9fd20c6857650ecc6b86052c1"
     },
     {
+      "path": "docs/ATTENTION_AND_SHARED_CONTEXT.md",
+      "bytes": 8691,
+      "sha256": "b06733f9866187e977d51bdb8720516c91f5547cec5e434a8f3f36fa0128dff1"
+    },
+    {
       "path": "docs/DATA_CONTRACTS.md",
-      "bytes": 3860,
-      "sha256": "c4ce50605070dac2037ecef19179a08384b78595f6ecc2a8669dddb058964771"
+      "bytes": 5972,
+      "sha256": "1798fa8633c587e458737271d0b1abf7af01aeaa2faac260005cf50146f2f8ea"
     },
     {
       "path": "docs/REVIEW_NOTES.md",
       "bytes": 3034,
       "sha256": "25ef1044d8d4a9901f3a32b6d715fe8ec7b5a95efbdf31f9ca958e1050ca0d11"
+    },
+    {
+      "path": "docs/THE_STORY_CONTINUES.en.md",
+      "bytes": 2318,
+      "sha256": "e29c73c8ab98bd61db02a9c437c6fe1c8b5826a8ae0823d96f60a98d4d14fe93"
+    },
+    {
+      "path": "docs/UPDATE_2026_11_01.md",
+      "bytes": 1490,
+      "sha256": "b5898dc42535cb2861458944825f884189ed7aac9a93cb280a68687e0486dd5b"
+    },
+    {
+      "path": "examples/attention_demo.py",
+      "bytes": 3646,
+      "sha256": "4d1e89ce154e31ab4ed81273c3cef51d08392d27757010355ffa394178d2f3c1"
     },
     {
       "path": "examples/demo.py",
@@ -98,14 +119,24 @@
       "sha256": "327ed47ba8f84ca31e2e124e2461d4ba10a08d06ab0aa3fb98cf5f4236cc58ba"
     },
     {
+      "path": "kernel/app/agents/memory/attention.py",
+      "bytes": 9383,
+      "sha256": "480ef46583855ad5761902c858ac831817af1212f8cf67cad137ad82f25ffa2b"
+    },
+    {
       "path": "kernel/app/agents/memory/base_index_sqlite.py",
       "bytes": 6072,
       "sha256": "d459dd913fc65e9fb740d70c67055c7c02117f999fb7d90738bcfffb766412fb"
     },
     {
       "path": "kernel/app/agents/memory/capsule_ingester.py",
-      "bytes": 7925,
-      "sha256": "b9011f3a1b8a442729c096edbeb17db0bde6749d097492504b68c91aaeec74e8"
+      "bytes": 7995,
+      "sha256": "e03c0de1ae5dd750394b1cfee573ee2f2be3323c6c3e07944c3412cbb11fb4d7"
+    },
+    {
+      "path": "kernel/app/agents/memory/concept_card.py",
+      "bytes": 5076,
+      "sha256": "6f8e878a72b908e245d05ad5bdbb1a8afb09b1b2e6445a6e17a2f94dce9cdea1"
     },
     {
       "path": "kernel/app/agents/memory/daily_context.py",
@@ -119,8 +150,8 @@
     },
     {
       "path": "kernel/app/agents/memory/embeddings_batch.py",
-      "bytes": 21737,
-      "sha256": "4c48be59d9260d1e5e7f53652f477d46e45c566436ebc8f16926c413e6a1b034"
+      "bytes": 21807,
+      "sha256": "844a7c62adb9e20ef216b72498e74730e57915782f5736560c0bdc20c0f70315"
     },
     {
       "path": "kernel/app/agents/memory/embeddings_measure.py",
@@ -131,6 +162,11 @@
       "path": "kernel/app/agents/memory/index_freshness.py",
       "bytes": 11526,
       "sha256": "99fec5a9d9e516f880749ff2d6992278b671bc9264ac64af6d77ae4eb841f371"
+    },
+    {
+      "path": "kernel/app/agents/memory/index_lock.py",
+      "bytes": 2255,
+      "sha256": "e57001a9291fd7cfe3816e87d5a6c3869c187787bfc43ef721fad640d8c665f0"
     },
     {
       "path": "kernel/app/agents/memory/index_memory.py",
@@ -179,8 +215,8 @@
     },
     {
       "path": "kernel/app/agents/memory/reviewed_import.py",
-      "bytes": 5773,
-      "sha256": "c9fc0e9933c552837ce0819c587b9f43f71b822b9a6130e1d4310fa6aba207b6"
+      "bytes": 5880,
+      "sha256": "228c87e5a69f831e714ff9c81c0d9fde1388a9a62d4f558c7d71683d63a826cf"
     },
     {
       "path": "kernel/app/agents/memory/semantic_retrieval.py",
@@ -213,6 +249,11 @@
       "sha256": "17b973458a85a402db68ba4da21b36061121b3a1d1732da6d24cfea15e556bf3"
     },
     {
+      "path": "kernel/app/governance/shared_memory_context.py",
+      "bytes": 10562,
+      "sha256": "efb8c60de68ee38697d8a942d4502c40da22034ac2437fb0839d9f09df3b61d3"
+    },
+    {
       "path": "kernel/app/memory_backend.py",
       "bytes": 716,
       "sha256": "c2ce19d9097107b133ebbb9e82f2665593a78eedfdfa817a5b9dcc7509dd3fb1"
@@ -223,6 +264,11 @@
       "sha256": "87bb3c3afe758b9e28c07b3c84b75ab50f4bd397fd35894725f7ff4dc74d0690"
     },
     {
+      "path": "kernel/app/tests/test_attention.py",
+      "bytes": 5900,
+      "sha256": "9b391701b3b1c1ad75d3ea259aaf9d4d257c85c0cdd632123ab3b1ea7b319b72"
+    },
+    {
       "path": "kernel/app/tests/test_embeddings_chunking.py",
       "bytes": 3569,
       "sha256": "ac9ffbce67d5588bfb37500180bef8418f0925c6b8567e511b6a844af260925c"
@@ -231,6 +277,11 @@
       "path": "kernel/app/tests/test_embeddings_measure.py",
       "bytes": 4499,
       "sha256": "174eeefde9fc959dc6cc01dbb36cb0d4b6cc3b329d2a8e7d662e820e720c8c00"
+    },
+    {
+      "path": "kernel/app/tests/test_index_lock.py",
+      "bytes": 4195,
+      "sha256": "fdc99806ee48059f25b9c9449df9ad3e74cef4ed11739b2ac12fe84f992dd10f"
     },
     {
       "path": "kernel/app/tests/test_macierz_indeksu.py",
@@ -246,6 +297,11 @@
       "path": "kernel/app/tests/test_retrieval_usage.py",
       "bytes": 2647,
       "sha256": "67e78c5fea03b9a8c3f367ebde65c92ec34dc934b5b6e9192098f5de3ea24ada"
+    },
+    {
+      "path": "kernel/app/tests/test_shared_context.py",
+      "bytes": 4877,
+      "sha256": "13d0b97b24995968f24650bd87a537c155214bc47d160abc6c84cd9d54f8f0e1"
     },
     {
       "path": "kernel/app/tools/__init__.py",
@@ -318,5 +374,5 @@
       "sha256": "ab3045b2c6d999fbeef2fcf2363315fead2e90a8f216fc54c458ef5147633bb7"
     }
   ],
-  "privacy_scan": "Selected indicators plus explicit source allowlist and manual source review; no proof of anonymity from regex alone."
+  "revision": "R2"
 }

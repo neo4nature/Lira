@@ -1,4 +1,5 @@
 from __future__ import annotations
+from agents.memory.index_lock import dopisz_linie
 import argparse
 import hashlib
 import json
@@ -132,7 +133,7 @@ def ingest_once(model: str=EMBED_MODEL, limit: int=200, existing: set | None=Non
                     source['parent_id'] = rid
                     source['parent_range'] = [start, end]
                 rec = {'schema': 'lira.embedding_record.v1', 'id': record_id, 'ts': now_iso(), 'model': model, 'source': source, 'text': fragment_text, 'vector': fragment['vector'], 'meta': {'sha256': _sha256(fragment_text)}}
-                f.write(json.dumps(rec, ensure_ascii=False) + '\n')
+                dopisz_linie(f, json.dumps(rec, ensure_ascii=False) + '\n', index_path)
                 existing.add(record_id)
                 stats['embedded'] += 1
             last_ts = cap.get('created_at') or last_ts

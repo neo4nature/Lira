@@ -29,3 +29,16 @@ Retrieval yields candidates and provenance. `retrieval_usage.record_retrieval` r
 The inherited schemas `xian.night-core.v2`, `xian.social-core.v1` and `xian.decisions.v1` and field `neo_self` are protocol names retained from the implementation. `neo_self` stores exact statements attributed to the configured example human role, not a claim about the library's identity. The current social quote validator still assumes `Operator`; general multi-user configuration is an explicit review limitation. Work classification includes Polish words, code filenames and plan-like markers and is a heuristic.
 
 The decision registry is separate from generated daily notes. A generated decision candidate cannot authorize an operation. `apply_reviewed` checks known evidence, monotonic revisions, review labels, and atomic chain updates; the caller supplies the source set and authorization policy. No execution or message delivery is implemented.
+
+
+## Attention and shared-context addition
+
+`attention.build_packet(message, registry, channel=..., reviewers=..., retrieve=...)` accepts an explicit message dictionary with `id`, `created_at` (timezone-aware ISO timestamp) and `text`. The host supplies a nonempty `channel` name; it is not fixed to the workshop's table. The packet has `version: public-attention.v2`, `message: {id, ts, channel, text}`, `created_at`, `concepts`, `card_errors` and `specific`. `created_at` is packet construction time and `message.ts` is the original source time. `publish` accepts any nonempty host channel and checks ID, source timestamp and exact text against the explicit event store. Channel is a host label included in the packet hash, not an authenticated route or an access-control permission.
+
+Optional `not_needed` and `skipped` reason strings create the corresponding terminal no-context decisions; they are not separate private render paths. No Polish packet keys or hardcoded table-channel value are needed by the public adapter.
+
+`shared_memory_context` reads the explicit capsule database without creating it. Original shared messages and transport copies must have identical text, sender and thread; source identity is bound to ID, text SHA-256 and timestamp. Your host authenticates input; database fields and reviewer names are not authentication.
+
+The persisted `lira.shared-memory-context.v3` envelope contains `round_id`, `input_created_at`, `input_sha256`, `packet_id`, `packet_sha256`, `created_at`, `deadline_at`, `status`, `reason`, `observer_created_at`, `text` and `sha256`. The final hash covers the canonical envelope without its own `sha256` field. Terminal statuses are `prepared`, `not_needed`, `observer_skipped` and `missing`; `read_context` returns `None` while no decision exists and the deadline remains open. Receipts describe prepared material, not actual model use.
+
+All index appenders in this release use `<index>.lock` and POSIX `flock` for serialization of record writes. Import-level pending markers and locks remain separate; no claim of multi-writer transaction recovery is added.

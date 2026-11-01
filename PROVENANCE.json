@@ -410,5 +410,33 @@
       ],
       "export_sha256": "e0e4f5978a4a11a5ed77f7ea7874e55cb84ceae169dabef1cb6b65be6c8bb891"
     }
-  ]
+  ],
+  "update_2026_11_01": {
+    "status": "candidate_pending_independent_review",
+    "base_public_commit": "76d144a78aa63c7b6baa44741e60fa9d02cc2969",
+    "derived_from_workshop": [
+      "agents/memory/index_lock.py",
+      "agents/memory/concept_card.py",
+      "agents/memory/concept_topics.py reviewed registry reader",
+      "governance/memory_context_delivery.py v3"
+    ],
+    "new_public_adapters": [
+      "agents/memory/attention.py",
+      "governance/shared_memory_context.py"
+    ],
+    "adaptations": [
+      "Explicit registry and reviewer IDs, no fixed personal topic paths",
+      "Explicit source database and recipients, no inbox/voice/host imports",
+      "Explicit renderer, no private observer import",
+      "One shared append lock for all three released index appenders",
+      "Synthetic examples and tests only"
+    ],
+    "not_ported": [
+      "Private cards and conversations",
+      "Agent inboxes, startup scripts, nightly delivery processes",
+      "Automatically generated concept cards or basal classification",
+      "Host-specific history CLI, origin archive importer and SD backup scripts"
+    ],
+    "review_revision": "R2 after Soryel review: host channel, English packet, evidence dedup, opening example"
+  }
 }

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from agents.memory.index_lock import dopisz_linie
 from memory_backend import post as backend_post
 import fcntl
 import hashlib
@@ -361,7 +362,7 @@ def build_embeddings(model: str='mxbai-embed-large:latest', max_files: int=400, 
                     if record_id in existing:
                         continue
                     rec = _rekord_pliku(path=path, offset=offset + start, chunk=fragment_text, tekst_pliku=text, vector=fragment['vector'], model=model, chunk_size=chunk_size, overlap=overlap, logical_source_id=logical_by_path.get(str(path)), record_id=record_id, parent_id=rid if outcome['rechunked'] else None, parent_range=(start, end) if outcome['rechunked'] else None)
-                    f.write(json.dumps(rec, ensure_ascii=False) + '\n')
+                    dopisz_linie(f, json.dumps(rec, ensure_ascii=False) + '\n', index_path)
                     existing.add(record_id)
                     chunks_embedded += 1
                 if chunks_embedded % 50 == 0:

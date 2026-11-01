@@ -5,6 +5,7 @@ or a cryptographic signature. All writers sharing an index must be serialized.
 An interrupted append leaves a pending marker and refuses further writes rather
 than truncating uncertain evidence. No automatic repair or pruning is provided.
 """
+from agents.memory.index_lock import wylacznie
 from pathlib import Path
 import fcntl
 import hashlib
@@ -82,13 +83,14 @@ def import_reviewed(source,receipt,index,*,embed=None,model='provided-vector',wr
         dirfd=os.open(target.parent,os.O_RDONLY)
         try:os.fsync(dirfd)
         finally:os.close(dirfd)
-        fd=os.open(target,os.O_WRONLY|os.O_CREAT|os.O_APPEND,0o600)
-        try:
-            for rec in pending:
-                data=(_canonical(rec)+'\n').encode()
-                if os.write(fd,data)!=len(data):raise OSError('short write; pending marker retained')
-            os.fsync(fd)
-        finally:os.close(fd)
+        with wylacznie(target):
+            fd=os.open(target,os.O_WRONLY|os.O_CREAT|os.O_APPEND,0o600)
+            try:
+                for rec in pending:
+                    data=(_canonical(rec)+'\n').encode()
+                    if os.write(fd,data)!=len(data):raise OSError('short write; pending marker retained')
+                os.fsync(fd)
+            finally:os.close(fd)
         marker.unlink()
         dirfd=os.open(target.parent,os.O_RDONLY)
         try:os.fsync(dirfd)

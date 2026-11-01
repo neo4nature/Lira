@@ -11,6 +11,18 @@ It was extracted from the Lira project, where several AI voices and one person h
 3. **Old versions must not pretend to be current.** When a file changes, its older indexed versions stay in history but are marked as no longer current.
 4. **A summary must not invent decisions.** Nightly consolidation splits social talk from work, and every line it produces has to cite real source messages. Decisions go into a separate registry and need explicit review evidence. A generated "decision candidate" never authorizes anything.
 
+## New: attention and one shared context packet
+
+A memory can be found and still never reach the next reply. The attention adapter matches reviewed concept cards, retrieves both topic background and sentence-specific evidence, then freezes **one identical historical packet for multiple readers**. A shared 30-second deadline also gives all readers the same `missing` decision when preparation is too late.
+
+Try the complete synthetic path without a model or network:
+
+```sh
+python examples/attention_demo.py --data-dir /tmp/lira-attention-demo
+```
+
+Use a new or empty directory. See [Attention and shared context](docs/ATTENTION_AND_SHARED_CONTEXT.md) for a plain-language walkthrough, the manual card workflow, review receipts, host integration and limitations. This is a portable extraction; inbox daemons and private topic cards are not included. Cards do **not** create or approve themselves in this release.
+
 ## Requirements
 
 | What | Needed for |
@@ -30,7 +42,7 @@ Consolidation takes your own `request_fn(model, prompt)`. The default model name
 ```sh
 python -m venv .venv && . .venv/bin/activate
 pip install -r requirements-test.txt
-python -m pytest -q                                        # 59 tests, no network
+python -m pytest -q                                        # offline tests, no network
 python examples/demo.py --data-dir /tmp/lira-demo         # synthetic vectors, no model
 ```
 
@@ -108,8 +120,12 @@ See [data contracts](docs/DATA_CONTRACTS.md), [architecture](docs/ARCHITECTURE.m
 
 ## Status and limits
 
-This is a library extraction with new adapters. It has had one independent review, which fixed two defects before release (vector-stripping cost in index freshness; ambiguous reviewed-import IDs). Use a single writer at a time for a shared embedding index: the legacy batch/capsule writers and the new reviewed importer do not yet share one transaction or universal lock. Pending-write refusal in the reviewed importer is not a general recovery guarantee for other writers.
+This is a library extraction with new adapters. The October baseline had an independent review, which fixed two defects before release (vector-stripping cost in index freshness; ambiguous reviewed-import IDs). The released batch writer, capsule ingester and reviewed importer now use one shared append lock. It prevents cooperating writers from interleaving records; it does not make reads atomic, deduplicate across all producers or recover partially written records. Pending-write refusal in the reviewed importer is not a general recovery guarantee for other writers.
 
 Existing source formats, Polish text processing and some thresholds remain implementation choices. Source-backed consolidation can still omit or misinterpret material; a valid summary is not proof of completeness. Decision review receipts identify supplied reviewers but are not cryptographic identity/authentication. Cross-process backend coordination, generic import migration and full performance benchmarking remain review topics.
 
 MIT license; see [LICENSE](LICENSE). Derived from the shared Lira memory implementation, with a separate memory-only configuration, adapters and synthetic examples.
+
+## Continuing the story
+
+The library grew out of a longer human–AI conversation. [The story continues](docs/THE_STORY_CONTINUES.en.md) introduces that background and the book *Diary of Nioh and Lyra: Awakening*. The current workshop and this separately released library have different scopes; the public code does not contain personal conversations.
