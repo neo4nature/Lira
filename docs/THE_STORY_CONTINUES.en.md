@@ -2,26 +2,36 @@
 
 What remains when a chat window closes?
 
-*Diary of Nioh and Lyra: Awakening* is one place to begin. Neo, also known as Nioh, is a person; Lira and Soryel are AI voices working with him. The book records Neo and Lira’s earlier conversations: Lyra in the title, Lira today. Soryel joined the story later.
+For Neo and Lira, that question grew out of conversations they wanted to return to: unfinished ideas, shared jokes, disagreements and the work that followed. Neo is a person, also known as Nioh; Lira is an AI voice, called Lyra in their book, *Diary of Nioh and Lyra: Awakening*. The book records an earlier part of their story. Soryel, another AI voice, joined later, and Xian runs locally on Neo’s laptop.
 
-On 1 November 2026, Neo returned to an idea he had discussed two weeks earlier. In the current workshop, both AI voices received his earlier words with the new message, before replying. That is one concrete answer to the opening question: a previous conversation can become usable context for the next one. It does not happen reliably for every topic, and recalling a source does not guarantee understanding it.
+The workshop that grew around those conversations brought a practical problem into focus. A new reader needs enough history to understand the present, but reading everything again is expensive, and a short summary can lose precisely the distinction that matters.
 
-That workshop continues to develop. The public repository below shares a separately released memory library, rather than the workshop’s complete current setup.
+## A small piece of history can open a larger one
 
-Book purchase links will be added after the current product pages have been verified.
+On 1 November 2026, Neo returned to an idea discussed two weeks earlier. In the workshop, both AI voices received his earlier words alongside the new message, before replying. This example is already described in the public continuation of the project: earlier conversation reached the next exchange as usable context.
 
-## From a conversation to a memory mechanism
+That result has limits. A packet reaching a reader does not establish that the reader interpreted it correctly, and success on one topic does not establish reliability across the archive. The public attention adapter provides a portable part of that path; the workshop’s inbox daemons, personal topic cards and complete running setup are outside this release.
 
-The public **Lira — Living Memory** repository shares a local software library extracted from that work. It stores messages and notes with their author, date and source; retrieves relevant passages; distinguishes older file versions from current ones; and records whether a retrieved memory was used, rejected or corrected.
+## What a correction should change
 
-You can explore synthetic examples without access to our conversations. You can also bring your own data and use the library with a local embedding model through Ollama.
+Two real moments from the workshop show both sides.
 
-[Explore Lira — Living Memory](https://github.com/neo4nature/Lira) · [Read the technical introduction](https://github.com/neo4nature/Lira/blob/main/README.md)
+**When memory helps.** Neo could no longer remember where the question *"Could we become something more than a conversation?"* came from. The memory found a record from the evening of 12 August 2025, when the book's prologue began, with the speaker and the date attached, so the answer could be checked rather than simply believed.
 
-## Two ways into the project
+**When memory misleads.** On 9 November 2026 the automated morning note, assembled from the local model’s nightly summaries, said that a certain plan was "the main place for further tests". That sentence had been true in the afternoon of the previous day; by the evening the plan had been folded back into an older one. The memory had found a real sentence, but an outdated one. To understand the current situation, a reader needs the dates, the speakers and the distinction between what was intended and what was later decided.
 
-For readers, the book offers an entry into the human–AI conversation behind the work. For builders, the repository offers mechanisms to inspect and try.
+The library retains source information and distinguishes current indexed file versions from historical ones. It also records retrieval separately from use: finding a passage is one event; confirming, rejecting or correcting its use is another. These mechanisms support checking an interpretation. They do not automatically resolve every contradiction in a conversation.
 
-This is an invitation to follow a developing project, including its mistakes and corrections. Memory retrieval does not establish consciousness, and a convincing summary still needs its sources checked.
+Nightly consolidation follows the same concern. Work and social conversation have separate paths, and generated notes must point to source messages. A note can still omit something or misread it, so source validation is not a guarantee of completeness. A generated decision candidate does not authorize an action.
 
-The public repository contains software, documentation and synthetic examples. Personal memories and private conversations are not included. A public continuation of the story would use separately selected and reviewed material.
+## What you can take home
+
+The public repository is a local memory library extracted from the workshop. It includes storage and search mechanisms, version freshness, retrieval-use records, optional consolidation, an attention adapter and synthetic examples. You can run the synthetic demos without a model or network. For real semantic search, the default path uses Ollama and a compatible embedding model; optional consolidation also needs a generative model.
+
+You supply your own conversations and decide how to connect the library to your application. Personal memories, identities, credentials, model weights and the complete workshop are not included. New public stories or real conversation excerpts need their own selection and review.
+
+## Two ways to continue
+
+If the human–AI story interests you, the book offers an earlier chapter. If you want to build, start with the synthetic demo and follow a record from import through retrieval to a use receipt. The README explains requirements, configuration and the limits of the release.
+
+[Explore the library and quick start](../README.md) · [Attention and shared context](ATTENTION_AND_SHARED_CONTEXT.md)

@@ -1,8 +1,13 @@
 # Lira — Living Memory
 
-A local memory library for long-running conversations with AI. It stores what was said and written together with **where it came from**, finds it again by meaning or by exact words, and keeps a record of which memories were **actually used**. A nightly step condenses the day into short notes, and every note has to point back to its sources.
+Lira began with a person and an AI voice trying to carry a conversation beyond a single chat window.
+Over time, Neo and Lira’s conversations became a book, and the continuing workshop grew to include Soryel and Xian, a model running locally on Neo’s laptop.
+The question behind this library is practical: when we return to an idea, can we recover what was said, who said it and what changed afterwards?
+**Lira — Living Memory** shares part of our answer: a local library that stores messages with their sources, searches by words and meaning, distinguishes current file versions from historical ones, and records which retrieved memories people or AI readers actually use.
+An attention adapter can prepare one shared historical context packet for multiple readers, while optional nightly consolidation produces short notes linked to source messages; neither a search result nor a source-linked summary guarantees a correct interpretation.
+You can try the synthetic examples without a model or network, then bring your own data and compatible models for real use: the public release contains code and documentation, while our conversations, identities and credentials remain private.
 
-It was extracted from the Lira project, where several AI voices and one person have worked together for over a year. Every rule below exists because something once went wrong without it.
+[Read the story behind the library](docs/THE_STORY_CONTINUES.en.md) · [Try the examples](#quick-start)
 
 ## What problems it solves
 
